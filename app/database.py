@@ -1,6 +1,14 @@
+from pathlib import Path
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
+
+# SQLite cannot create a database file when its parent directory does not exist.
+# This matters on fresh deployments such as Railway, where the local data folder
+# is not present in the source checkout.
+if settings.database_url.startswith("sqlite"):
+    Path("data").mkdir(parents=True, exist_ok=True)
 
 connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 engine = create_engine(settings.database_url, connect_args=connect_args, future=True)
