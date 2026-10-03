@@ -59,7 +59,7 @@ def _complete(messages, temperature=0.1):
         response=_client().chat.completions.create(model=settings.groq_model,messages=messages,temperature=temperature)
         return response.choices[0].message.content or ""
     except Exception as exc:
-        raise AIServiceError(f"Groq request failed: {type(exc).__name__}") from exc
+     raise AIServiceError(f"Groq request failed: {type(exc).__name__}: {str(exc)}") from exc
 
 def _memory(db,user):
     rows=(db.query(AgentMemory).filter(AgentMemory.business_id==user.business_id,AgentMemory.user_id==user.id).order_by(AgentMemory.created_at.desc()).limit(settings.memory_turn_limit).all())

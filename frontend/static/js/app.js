@@ -2045,286 +2045,431 @@ function stockModal(
 // ============================================================
 
 async function ordersPage() {
-    const os =
-        await api('/api/orders');
+    try {
+        const os = await api('/api/orders');
 
-    const canStatus =
-        [
-            'owner',
-            'admin',
-            'staff'
-        ].includes(me.role);
+        const isCustomer = me.role === 'customer';
+        const canManage = ['owner', 'admin', 'staff'].includes(me.role);
 
-    $('#page').innerHTML = `
-        <div class="page-head">
+        $('#page').innerHTML = `
+            <div class="page-head">
 
-            <div>
+                <div>
+                    <div class="eyebrow">
+                        ${isCustomer ? 'YOUR SHOPPING' : 'ORDER MANAGEMENT'}
+                    </div>
 
-                <div class="eyebrow">
-                    ORDER OPERATIONS
+                    <h1>
+                        ${isCustomer ? 'My Orders' : 'Orders'}
+                    </h1>
+
+                    <p>
+                        ${
+                            isCustomer
+                                ? 'Track your products, order status and expected delivery.'
+                                : 'View customer orders and manage delivery progress.'
+                        }
+                    </p>
                 </div>
 
-                <h1>
-                    ${
-                        me.role === 'customer'
-                            ? 'My orders'
-                            : 'Orders'
-                    }
-                </h1>
-
-                <p>
-                    ${
-                        me.role === 'customer'
-                            ? 'Your orders are scoped to your account.'
-                            : 'Manage authorized orders from your business.'
-                    }
-                </p>
+                ${
+                    isCustomer
+                        ? `
+                        <button
+                            class="btn btn-primary"
+                            onclick="customerStorePage()"
+                        >
+                            Continue Shopping
+                        </button>
+                        `
+                        : `
+                        <button
+                            class="btn btn-primary"
+                            onclick="route('products')"
+                        >
+                            + Add Product
+                        </button>
+                        `
+                }
 
             </div>
 
             ${
-                me.role === 'customer'
+                os.length
                     ? `
-                    <button
-                        class="btn btn-primary"
-                        onclick="productsPage()"
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:
+                                repeat(auto-fit,minmax(330px,1fr));
+                            gap:18px;
+                        "
                     >
-                        Browse products
-                    </button>
-                    `
-                    : ''
-            }
 
-        </div>
+                        ${os.map(o => {
 
-        <div class="grid grid-2">
+                            const statusLabel = {
+                                pending: 'Order Placed',
+                                confirmed: 'Confirmed',
+                                processing: 'Processing',
+                                shipped: 'Shipped',
+                                completed: 'Delivered',
+                                cancelled: 'Cancelled'
+                            }[o.status] || o.status;
 
-            ${
-                os
-                    .map(
-                        o => `
-                        <div class="order-card">
+                            const statusClass =
+                                o.status === 'cancelled'
+                                    ? 'out'
+                                    : o.status === 'pending'
+                                        ? 'low'
+                                        : '';
 
-                            <div class="order-head">
-
-                                <b>
-                                    Order #${o.id}
-                                </b>
-
-                                <span
-                                    class="
-                                        status
-                                        ${
-                                            o.status ===
-                                            'cancelled'
-                                                ? 'out'
-                                                : o.status ===
-                                                    'pending'
-                                                    ? 'low'
-                                                    : ''
-                                        }
+                            return `
+                                <div
+                                    class="card"
+                                    style="
+                                        padding:22px;
+                                        border-radius:18px;
                                     "
                                 >
-                                    ${o.status}
-                                </span>
 
-                            </div>
-
-                            <div
-                                class="small muted"
-                                style="margin-top:5px"
-                            >
-                                ${date(
-                                    o.created_at
-                                )}
-                            </div>
-
-                            <div class="order-items">
-
-                                ${o.items
-                                    .map(
-                                        i => `
-                                        <div
-                                            class="order-item"
-                                        >
-
-                                            <span>
-                                                ${esc(
-                                                    i.product
-                                                )}
-                                                ×
-                                                ${i.quantity}
-                                            </span>
-
-                                            <span>
-                                                ${money(
-                                                    i.unit_price *
-                                                        i.quantity
-                                                )}
-                                            </span>
-
-                                        </div>
-                                        `
-                                    )
-                                    .join('')}
-
-                            </div>
-
-                            <div
-                                class="order-total"
-                            >
-
-                                <span>
-                                    Total
-                                </span>
-
-                                <span>
-                                    ${money(
-                                        o.total_amount
-                                    )}
-                                </span>
-
-                            </div>
-
-                            ${
-                                o.notes
-                                    ? `
-                                    <p
-                                        class="
-                                            small
-                                            muted
-                                        "
-                                    >
-                                        ${esc(
-                                            o.notes
-                                        )}
-                                    </p>
-                                    `
-                                    : ''
-                            }
-
-                            ${
-                                canStatus
-                                    ? `
                                     <div
                                         style="
-                                            margin-top:12px
+                                            display:flex;
+                                            justify-content:space-between;
+                                            align-items:center;
+                                            gap:12px;
+                                            margin-bottom:8px;
                                         "
                                     >
 
-                                        <select
-                                            onchange="
-                                                updateOrder(
-                                                    ${o.id},
-                                                    this.value
-                                                )
-                                            "
-                                            class="field input"
-                                        >
+                                        <div>
+                                            <div class="small muted">
+                                                ORDER
+                                            </div>
 
-                                            <option
-                                                value="pending"
-                                                ${
-                                                    o.status ===
-                                                    'pending'
-                                                        ? 'selected'
-                                                        : ''
-                                                }
-                                            >
-                                                Pending
-                                            </option>
+                                            <h3 style="margin:3px 0 0">
+                                                #${o.id}
+                                            </h3>
+                                        </div>
 
-                                            <option
-                                                value="confirmed"
-                                                ${
-                                                    o.status ===
-                                                    'confirmed'
-                                                        ? 'selected'
-                                                        : ''
-                                                }
-                                            >
-                                                Confirmed
-                                            </option>
-
-                                            <option
-                                                value="processing"
-                                                ${
-                                                    o.status ===
-                                                    'processing'
-                                                        ? 'selected'
-                                                        : ''
-                                                }
-                                            >
-                                                Processing
-                                            </option>
-
-                                            <option
-                                                value="shipped"
-                                                ${
-                                                    o.status ===
-                                                    'shipped'
-                                                        ? 'selected'
-                                                        : ''
-                                                }
-                                            >
-                                                Shipped
-                                            </option>
-
-                                            <option
-                                                value="completed"
-                                                ${
-                                                    o.status ===
-                                                    'completed'
-                                                        ? 'selected'
-                                                        : ''
-                                                }
-                                            >
-                                                Completed
-                                            </option>
-
-                                            <option
-                                                value="cancelled"
-                                                ${
-                                                    o.status ===
-                                                    'cancelled'
-                                                        ? 'selected'
-                                                        : ''
-                                                }
-                                            >
-                                                Cancelled
-                                            </option>
-
-                                        </select>
+                                        <span class="status ${statusClass}">
+                                            ${esc(statusLabel)}
+                                        </span>
 
                                     </div>
-                                    `
-                                    : ''
-                            }
 
-                        </div>
-                        `
-                    )
-                    .join('') ||
-                `
-                <div
-                    class="empty"
-                    style="grid-column:1/-1"
-                >
-                    No orders yet.
-                </div>
-                `
+                                    <div
+                                        class="small muted"
+                                        style="margin-bottom:18px"
+                                    >
+                                        Placed ${date(o.created_at)}
+                                    </div>
+
+                                    ${
+                                        !isCustomer && o.user
+                                            ? `
+                                            <div
+                                                style="
+                                                    background:#f4f0e7;
+                                                    padding:12px;
+                                                    border-radius:12px;
+                                                    margin-bottom:15px;
+                                                "
+                                            >
+                                                <div class="small muted">
+                                                    CUSTOMER
+                                                </div>
+
+                                                <strong>
+                                                    ${esc(
+                                                        o.user.full_name ||
+                                                        o.customer_name ||
+                                                        'Customer'
+                                                    )}
+                                                </strong>
+
+                                                ${
+                                                    o.delivery_details
+                                                        ? `
+                                                        <div
+                                                            class="small muted"
+                                                            style="margin-top:5px"
+                                                        >
+                                                            ${esc(
+                                                                o.delivery_details
+                                                            )}
+                                                        </div>
+                                                        `
+                                                        : ''
+                                                }
+                                            </div>
+                                            `
+                                            : ''
+                                    }
+
+                                    <div class="small muted">
+                                        PRODUCTS
+                                    </div>
+
+                                    <div
+                                        style="
+                                            margin-top:8px;
+                                            display:grid;
+                                            gap:8px;
+                                        "
+                                    >
+
+                                        ${
+                                            (o.items || [])
+                                                .map(
+                                                    i => `
+                                                    <div
+                                                        style="
+                                                            display:flex;
+                                                            justify-content:space-between;
+                                                            gap:12px;
+                                                            padding:10px 0;
+                                                            border-bottom:1px solid #eee8dd;
+                                                        "
+                                                    >
+
+                                                        <div>
+                                                            <strong>
+                                                                ${esc(i.product)}
+                                                            </strong>
+
+                                                            <div class="small muted">
+                                                                Quantity:
+                                                                ${i.quantity}
+                                                            </div>
+                                                        </div>
+
+                                                        <strong>
+                                                            ${money(
+                                                                Number(i.unit_price) *
+                                                                Number(i.quantity)
+                                                            )}
+                                                        </strong>
+
+                                                    </div>
+                                                    `
+                                                )
+                                                .join('')
+                                        }
+
+                                    </div>
+
+                                    <div
+                                        style="
+                                            display:flex;
+                                            justify-content:space-between;
+                                            margin-top:15px;
+                                            padding-top:12px;
+                                            border-top:1px solid #ddd5c7;
+                                        "
+                                    >
+                                        <strong>Total</strong>
+
+                                        <strong>
+                                            ${money(o.total_amount)}
+                                        </strong>
+                                    </div>
+
+                                    ${
+                                        o.expected_delivery_date
+                                            ? `
+                                            <div
+                                                style="
+                                                    margin-top:15px;
+                                                    padding:12px;
+                                                    background:#e8f0ea;
+                                                    border-radius:12px;
+                                                "
+                                            >
+                                                <div class="small muted">
+                                                    EXPECTED DELIVERY
+                                                </div>
+
+                                                <strong>
+                                                    ${esc(
+                                                        o.expected_delivery_date
+                                                    )}
+                                                </strong>
+                                            </div>
+                                            `
+                                            : `
+                                            ${
+                                                isCustomer
+                                                    ? `
+                                                    <div
+                                                        style="
+                                                            margin-top:15px;
+                                                            padding:12px;
+                                                            background:#f5f1e8;
+                                                            border-radius:12px;
+                                                        "
+                                                    >
+                                                        <div class="small muted">
+                                                            EXPECTED DELIVERY
+                                                        </div>
+
+                                                        <span>
+                                                            Owner has not set a delivery date yet.
+                                                        </span>
+                                                    </div>
+                                                    `
+                                                    : ''
+                                            }
+                                            `
+                                    }
+
+                                    ${
+                                        canManage
+                                            ? `
+                                            <div
+                                                style="
+                                                    margin-top:18px;
+                                                    padding-top:15px;
+                                                    border-top:1px solid #eee8dd;
+                                                "
+                                            >
+
+                                                <div class="small muted">
+                                                    UPDATE ORDER
+                                                </div>
+
+                                                <div
+                                                    style="
+                                                        display:grid;
+                                                        grid-template-columns:
+                                                            minmax(0,1fr)
+                                                            minmax(0,1fr);
+                                                        gap:10px;
+                                                        margin-top:8px;
+                                                    "
+                                                >
+
+                                                    <select
+                                                        id="order-status-${o.id}"
+                                                        class="field input"
+                                                    >
+                                                        <option
+                                                            value="pending"
+                                                            ${o.status === 'pending' ? 'selected' : ''}
+                                                        >
+                                                            Order Placed
+                                                        </option>
+
+                                                        <option
+                                                            value="confirmed"
+                                                            ${o.status === 'confirmed' ? 'selected' : ''}
+                                                        >
+                                                            Confirmed
+                                                        </option>
+
+                                                        <option
+                                                            value="processing"
+                                                            ${o.status === 'processing' ? 'selected' : ''}
+                                                        >
+                                                            Processing
+                                                        </option>
+
+                                                        <option
+                                                            value="shipped"
+                                                            ${o.status === 'shipped' ? 'selected' : ''}
+                                                        >
+                                                            Shipped
+                                                        </option>
+
+                                                        <option
+                                                            value="completed"
+                                                            ${o.status === 'completed' ? 'selected' : ''}
+                                                        >
+                                                            Delivered
+                                                        </option>
+
+                                                        <option
+                                                            value="cancelled"
+                                                            ${o.status === 'cancelled' ? 'selected' : ''}
+                                                        >
+                                                            Cancelled
+                                                        </option>
+                                                    </select>
+
+                                                    <input
+                                                        id="order-date-${o.id}"
+                                                        type="date"
+                                                        value="${
+                                                            o.expected_delivery_date
+                                                                ? String(
+                                                                    o.expected_delivery_date
+                                                                ).slice(0,10)
+                                                                : ''
+                                                        }"
+                                                    >
+
+                                                </div>
+
+                                                <button
+                                                    class="btn btn-primary btn-full"
+                                                    style="margin-top:10px"
+                                                    onclick="
+                                                        saveOrderUpdate(
+                                                            ${o.id}
+                                                        )
+                                                    "
+                                                >
+                                                    Save Order Update
+                                                </button>
+
+                                            </div>
+                                            `
+                                            : ''
+                                    }
+
+                                </div>
+                            `;
+                        }).join('')}
+
+                    </div>
+                    `
+                    : `
+                    <div class="card empty">
+                        ${
+                            isCustomer
+                                ? 'You have not placed any orders yet.'
+                                : 'No customer orders have been placed yet.'
+                        }
+                    </div>
+                    `
             }
+        `;
 
-        </div>
-    `;
+    } catch (e) {
+        $('#page').innerHTML = `
+            <div class="card">
+                <div class="error">
+                    ${esc(e.message)}
+                </div>
+            </div>
+        `;
+    }
 }
 
 
-async function updateOrder(
-    id,
-    status
-) {
+async function saveOrderUpdate(id) {
     try {
+        const status =
+            document.querySelector(
+                `#order-status-${id}`
+            )?.value;
+
+        const expected_delivery_date =
+            document.querySelector(
+                `#order-date-${id}`
+            )?.value || null;
+
         await api(
             '/api/orders/' +
                 id +
@@ -2332,13 +2477,14 @@ async function updateOrder(
             {
                 method: 'PATCH',
                 body: {
-                    status
+                    status,
+                    expected_delivery_date
                 }
             }
         );
 
         toast(
-            'Order status updated'
+            'Order updated successfully'
         );
 
         ordersPage();
