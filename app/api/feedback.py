@@ -5,6 +5,7 @@ from app.models import User, CustomerFeedback
 from app.schemas.schemas import FeedbackIn
 from app.auth.dependencies import get_current_user, require_csrf
 from app.services.audit import log_action
+from app.services.agentic import run_agentic, AIServiceError
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
@@ -31,6 +32,34 @@ def list_feedback(user: User = Depends(get_current_user), db: Session = Depends(
         "customer_email": x.customer.email if x.customer else None,
         "created_at": x.created_at.isoformat(),
     } for x in rows]
+
+@router.post("/query", dependencies=[Depends(require_csrf)])
+def ask_aura_query(payload: FeedbackIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if user.role != "customer":
+        raise HTTPException(403, "Customer access required")
+    try:
+        result = run_agentic(db, user, payload.message)
+    except AIServiceError as exc:
+        raise HTTPException(503, str(exc))
+    row = CustomerFeedback(
+        business_id=user.business_id,
+        customer_id=user.id,
+        kind="query",
+        subject=payload.subject,
+        message=payload.message.strip(),
+        ai_answer=result.get("answer"),
+        status="resolved",
+    )
+    db.add(row)
+    db.flush()
+    log_action(db, user, "customer_ai_query", "customer_feedback", row.id)
+    db.commit()
+    return {
+        "id": row.id,
+        "answer": row.ai_answer,
+        "run_id": result.get("run_id"),
+        "conversation_id": result.get("conversation_id"),
+    }
 
 @router.post("", dependencies=[Depends(require_csrf)])
 def create_feedback(payload: FeedbackIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
