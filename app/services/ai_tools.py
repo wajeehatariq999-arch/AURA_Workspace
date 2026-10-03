@@ -45,6 +45,41 @@ def get_order_status(ctx, order_id=None):
     orders=q.order_by(Order.created_at.desc()).limit(20).all()
     return [{"order_id":o.id,"status":o.status,"total":float(o.total_amount),"created_at":o.created_at.isoformat(),"items":[{"product":i.product.name,"quantity":i.quantity,"unit_price":float(i.unit_price)} for i in o.items]} for o in orders]
 
+def list_orders(ctx, date_from=None, date_to=None, status=None, limit=50):
+    q=ctx.db.query(Order).options(
+        joinedload(Order.items).joinedload(OrderItem.product),
+        joinedload(Order.customer),
+    ).filter(Order.business_id==ctx.user.business_id)
+    if ctx.user.role=="customer":
+        q=q.filter(Order.customer_id==ctx.user.id)
+    if date_from:
+        q=q.filter(Order.created_at >= f"{date_from}T00:00:00")
+    if date_to:
+        q=q.filter(Order.created_at < f"{date_to}T23:59:59.999999")
+    if status:
+        q=q.filter(Order.status==status)
+    rows=q.order_by(Order.created_at.desc()).limit(min(int(limit),100)).all()
+    return [{
+        "order_id":o.id,
+        "status":o.status,
+        "total":float(o.total_amount),
+        "created_at":o.created_at.isoformat(),
+        "customer":o.customer.full_name if o.customer else None,
+        "phone":_note_value(o.notes,"Phone"),
+        "address":_note_value(o.notes,"Delivery address"),
+        "expected_delivery_date":o.expected_delivery_date.isoformat() if o.expected_delivery_date else None,
+        "items":[{"product":i.product.name,"quantity":i.quantity,"unit_price":float(i.unit_price)} for i in o.items],
+    } for o in rows]
+
+def _note_value(notes, label):
+    if not notes:
+        return None
+    prefix=label.lower()+":"
+    for line in str(notes).splitlines():
+        if line.strip().lower().startswith(prefix):
+            return line.split(":",1)[1].strip()
+    return None
+
 
 def calculate_order_total(ctx, items):
     total=Decimal("0"); details=[]
@@ -115,6 +150,7 @@ TOOLS={
  "check_inventory": (check_inventory,"Inspect real inventory and reorder levels.",{"product_id":"integer|null","low_only":"boolean"}),
  "get_product": (get_product,"Retrieve a real product from this business.",{"product_id":"integer|null","name":"string|null"}),
  "get_order_status": (get_order_status,"Retrieve authorized order status and items.",{"order_id":"integer|null"}),
+ "list_orders": (list_orders,"List real authorized orders, optionally filtered by date and status.",{"date_from":"YYYY-MM-DD|null","date_to":"YYYY-MM-DD|null","status":"string|null","limit":"integer"}),
  "calculate_order_total": (calculate_order_total,"Calculate an order using current database prices and stock.",{"items":"array"}),
  "create_order": (create_order,"Create a real order and decrement inventory.",{"items":"array","notes":"string|null"}),
  "get_supplier": (get_supplier,"Retrieve real suppliers for this business.",{"supplier_id":"integer|null","name":"string|null"}),
