@@ -12,7 +12,7 @@ from app.services.audit import log_action
 AGENTS = {
     "customer_support": {
         "mission":"Answer customer/business questions using only authorized business data and knowledge.",
-        "tools":["get_product","get_order_status","get_business_policy","search_business_knowledge"]},
+        "tools":["get_product","get_order_status","list_orders","get_business_policy","search_business_knowledge"]},
     "order": {
         "mission":"Handle real order questions, totals and order creation using current product/stock/order data.",
         "tools":["get_product","get_order_status","list_orders","calculate_order_total","create_order","get_business_policy"]},
@@ -56,7 +56,7 @@ def _json(text: str):
 
 def _complete(messages, temperature=0.1):
     try:
-        response=_client().chat.completions.create(model=settings.groq_model,messages=messages,temperature=temperature)
+        response=_client().chat.completions.create(model=settings.effective_groq_model,messages=messages,temperature=temperature)
         return response.choices[0].message.content or ""
     except Exception as exc:
      raise AIServiceError(f"Groq request failed: {type(exc).__name__}: {str(exc)}") from exc
