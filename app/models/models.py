@@ -231,6 +231,22 @@ class AgentRun(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+class CustomerFeedback(Base):
+    __tablename__ = "customer_feedback"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    kind: Mapped[str] = mapped_column(String(20), default="feedback", nullable=False)
+    rating: Mapped[int | None] = mapped_column(Integer)
+    subject: Mapped[str | None] = mapped_column(String(200))
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    ai_answer: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="new", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now, nullable=False)
+    business = relationship("Business")
+    customer = relationship("User")
+
 class AgentMemory(Base):
     __tablename__ = "ai_memories"
     id: Mapped[int] = mapped_column(primary_key=True)
