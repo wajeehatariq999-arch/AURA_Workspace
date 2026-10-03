@@ -536,277 +536,95 @@ function closeSide() {
 // ============================================================
 
 async function dashboardPage() {
-    const [d, acts] = await Promise.all([
-        api('/api/dashboard'),
-        api('/api/insights/analytics')
-    ]);
+    try {
+        const [d, os, inv] = await Promise.all([
+            api('/api/dashboard'),
+            api('/api/orders'),
+            api('/api/inventory')
+        ]);
 
-    $('#page').innerHTML = `
-        <div class="page-head">
+        const recent = os.slice(0, 5);
+        const low = (inv || []).filter(x => x.stock <= x.reorder_level).slice(0, 5);
 
-            <div>
-                <div class="eyebrow">
-                    BUSINESS OVERVIEW
+        $('#page').innerHTML = `
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">BUSINESS OVERVIEW</div>
+                    <h1>Good to see you, ${esc((me.full_name || '').split(' ')[0])}.</h1>
+                    <p>See what is happening now and what needs attention next.</p>
                 </div>
-
-                <h1>
-                    Good to see you,
-                    ${esc(
-                        (me.full_name || '')
-                            .split(' ')[0]
-                    )}.
-                </h1>
-
-                <p>
-                    Your operating picture,
-                    grounded in live business data.
-                </p>
+                <button class="btn btn-primary" onclick="route('ai')">✦ Ask AURA</button>
             </div>
 
-            <button
-                class="btn btn-primary"
-                onclick="route('ai')"
-            >
-                ✦ Ask AURA
-            </button>
-
-        </div>
-
-        <div class="grid grid-4">
-
-            <div class="card metric">
-                <div class="metric-label">
-                    Revenue
-                </div>
-
-                <div class="metric-value">
-                    ${money(
-                        d.revenue ?? acts.revenue
-                    )}
-                </div>
-
-                <div class="metric-note">
-                    Non-cancelled orders
-                </div>
+            <div class="grid grid-4">
+                <div class="card metric"><div class="metric-label">Total Orders</div><div class="metric-value">${d.orders}</div></div>
+                <div class="card metric"><div class="metric-label">Revenue</div><div class="metric-value">${money(d.revenue || 0)}</div></div>
+                <div class="card metric"><div class="metric-label">Products</div><div class="metric-value">${d.products}</div></div>
+                <div class="card metric"><div class="metric-label">Low Stock</div><div class="metric-value">${d.low_stock}</div></div>
             </div>
 
-            <div class="card metric">
-                <div class="metric-label">
-                    Orders
-                </div>
-
-                <div class="metric-value">
-                    ${d.orders}
-                </div>
-
-                <div class="metric-note">
-                    All business orders
-                </div>
-            </div>
-
-            <div class="card metric">
-                <div class="metric-label">
-                    Low stock
-                </div>
-
-                <div class="metric-value">
-                    ${d.low_stock}
-                </div>
-
-                <div class="metric-note">
-                    At or below reorder level
-                </div>
-            </div>
-
-            <div class="card metric">
-                <div class="metric-label">
-                    Products
-                </div>
-
-                <div class="metric-value">
-                    ${d.products}
-                </div>
-
-                <div class="metric-note">
-                    Catalog records
-                </div>
-            </div>
-
-        </div>
-
-        <div
-            class="grid grid-2"
-            style="margin-top:15px"
-        >
-
-            <div class="card">
-
+            <div class="card" style="margin-top:18px">
                 <div class="card-title">
-                    <h3>7-day revenue</h3>
-
-                    <button
-                        class="ghost"
-                        onclick="route('analytics')"
-                    >
-                        Full analytics
-                    </button>
+                    <h3>Recent Orders</h3>
+                    <button class="ghost" onclick="route('orders')">View all</button>
                 </div>
-
-                ${revenueChart(
-                    acts.daily_revenue
-                )}
-
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>Customer</th><th>Order</th><th>Amount</th><th>Status</th></tr></thead>
+                        <tbody>
+                            ${recent.map(o => `
+                                <tr>
+                                    <td>${esc(o.customer?.name || o.customer?.full_name || 'Customer')}</td>
+                                    <td>#${o.id}</td>
+                                    <td>${money(o.total_amount)}</td>
+                                    <td><span class="status">${esc({
+                                        pending:'Order Placed', confirmed:'Confirmed',
+                                        processing:'Out for Delivery', shipped:'Shipped',
+                                        completed:'Delivered', cancelled:'Cancelled'
+                                    }[o.status] || o.status)}</span></td>
+                                </tr>
+                            `).join('') || '<tr><td colspan="4">No orders yet.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="card">
-
+            <div class="card" style="margin-top:18px">
                 <div class="card-title">
-                    <h3>Business signals</h3>
-                    <span class="status">
-                        LIVE DATA
-                    </span>
+                    <h3>Low Stock Products</h3>
+                    <button class="ghost" onclick="route('inventory')">Manage inventory</button>
                 </div>
-
-                <div class="grid grid-2">
-
-                    <div class="top-note">
-                        ${acts.pending_orders}
-                        active/pending orders
-                    </div>
-
-                    <div class="top-note">
-                        ${acts.out_of_stock}
-                        out of stock
-                    </div>
-
-                    <div class="top-note">
-                        ${acts.low_stock}
-                        low-stock items
-                    </div>
-
-                    <div class="top-note">
-                        ${acts.top_products.length}
-                        products with sales
-                    </div>
-
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>Product</th><th>Stock</th><th>Reorder Level</th><th>Status</th></tr></thead>
+                        <tbody>
+                            ${low.map(x => `
+                                <tr>
+                                    <td><b>${esc(x.product)}</b></td>
+                                    <td>${x.stock}</td>
+                                    <td>${x.reorder_level}</td>
+                                    <td><span class="status low">Low Stock</span></td>
+                                </tr>
+                            `).join('') || '<tr><td colspan="4">No low-stock products.</td></tr>'}
+                        </tbody>
+                    </table>
                 </div>
-
-                <div style="margin-top:20px">
-
-                    <div class="small muted">
-                        Top products
-                    </div>
-
-                    ${
-                        acts.top_products
-                            .map(
-                                x => `
-                                <div class="activity-row">
-
-                                    <div class="activity-icon">
-                                        ◈
-                                    </div>
-
-                                    <div>
-                                        <b>
-                                            ${esc(x.name)}
-                                        </b>
-
-                                        <small>
-                                            ${x.units}
-                                            units sold
-                                        </small>
-                                    </div>
-
-                                    <span class="status">
-                                        ${x.units}
-                                    </span>
-
-                                </div>
-                                `
-                            )
-                            .join('') ||
-                        `
-                        <div class="empty">
-                            No sales data yet.
-                        </div>
-                        `
-                    }
-
-                </div>
-
             </div>
 
-        </div>
-
-        <div
-            class="grid grid-2"
-            style="margin-top:15px"
-        >
-
-            <div class="card">
-
-                <div class="card-title">
-                    <h3>
-                        What needs attention
-                    </h3>
+            <div class="card" style="margin-top:18px">
+                <div class="card-title"><h3>Quick Actions</h3></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="btn btn-primary" onclick="route('orders')">View Orders</button>
+                    <button class="ghost" onclick="route('products')">Add Product</button>
+                    <button class="ghost" onclick="route('inventory')">Manage Inventory</button>
+                    <button class="ghost" onclick="route('ai')">Ask AURA</button>
                 </div>
-
-                ${
-                    d.low_stock
-                        ? `
-                        <div class="top-note">
-                            Inventory has
-                            ${d.low_stock}
-                            item(s) at or below
-                            reorder level.
-                            Ask AURA to inspect
-                            and prepare a supplier
-                            request.
-                        </div>
-                        `
-                        : `
-                        <div class="top-note">
-                            No products are currently
-                            at or below their reorder
-                            level.
-                        </div>
-                        `
-                }
-
             </div>
-
-            <div class="card">
-
-                <div class="card-title">
-
-                    <h3>
-                        Recent AI activity
-                    </h3>
-
-                    <button
-                        class="ghost"
-                        onclick="route('activity')"
-                    >
-                        View all
-                    </button>
-
-                </div>
-
-                <div id="dash-activity">
-                    Loading…
-                </div>
-
-            </div>
-
-        </div>
-    `;
-
-    loadRecentActivity(
-        '#dash-activity'
-    );
+        `;
+    } catch (e) {
+        $('#page').innerHTML = `<div class="card"><div class="error">${esc(e.message)}</div></div>`;
+    }
 }
-
 
 function revenueChart(xs) {
     const max = Math.max(
