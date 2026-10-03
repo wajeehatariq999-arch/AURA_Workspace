@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -96,6 +97,7 @@ class OrderStatusIn(BaseModel):
     status: str = Field(
         pattern="^(pending|confirmed|processing|shipped|completed|cancelled)$"
     )
+    expected_delivery_date: date | None = None
 
 
 class OrderItemIn(BaseModel):
