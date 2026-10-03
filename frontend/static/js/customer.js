@@ -1,23 +1,199 @@
-
-/* AURA Customer Storefront
-   Customer signup + store + cart + checkout
-*/
+/* =========================================================
+   AURA CUSTOMER STOREFRONT
+   Category filter + products + images + cart + checkout
+========================================================= */
 
 const auraOriginalSetAuthMode = window.setAuthMode;
 const auraOriginalRenderShell = window.renderShell;
 const auraOriginalRoute = window.route;
 
 let customerCart = [];
+let customerSelectedCategory = "All Products";
 
+/* =========================================================
+   CUSTOMER CATEGORIES
+========================================================= */
 
-/* =========================
+const CUSTOMER_CATEGORIES = [
+    {
+        name: "Fashion & Clothing",
+        icon: "✦",
+        image: "/static/images/home/fashion.jpg",
+    },
+    {
+        name: "Shoes & Footwear",
+        icon: "◇",
+        image: "/static/images/home/shoes.jpg",
+    },
+    {
+        name: "Jewellery & Accessories",
+        icon: "♢",
+        image: "/static/images/home/jewellery.jpg",
+    },
+    {
+        name: "Home & Living",
+        icon: "⌂",
+        image: "/static/images/home/home-living.jpg",
+    },
+    {
+        name: "Bags",
+        icon: "◇",
+        image: "/static/images/home/bags.jpg",
+    },
+    {
+        name: "Beauty & Personal Care",
+        icon: "✦",
+        image: "/static/images/home/beauty.jpg",
+    },
+    {
+        name: "Electronics & Gadgets",
+        icon: "◈",
+        image: "/static/images/home/electronics.jpg",
+    },
+    {
+        name: "Gifts & Lifestyle",
+        icon: "✧",
+        image: "/static/images/home/home-living.jpg",
+    },
+];
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function customerNormalize(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/\s+/g, " ");
+}
+
+function customerCategoryMatches(productCategory, selectedCategory) {
+    if (selectedCategory === "All Products") {
+        return true;
+    }
+
+    const product = customerNormalize(productCategory);
+    const selected = customerNormalize(selectedCategory);
+
+    if (product === selected) {
+        return true;
+    }
+
+    /* Helpful aliases for older categories */
+    const aliases = {
+        "jewellery and accessories": [
+            "accessories",
+            "jewelry",
+            "jewellery",
+            "jewelry and accessories",
+            "jewellery and accessories",
+        ],
+
+        "shoes and footwear": [
+            "shoes",
+            "footwear",
+            "shoe",
+            "shoes and footwear",
+        ],
+
+        "beauty and personal care": [
+            "beauty",
+            "personal care",
+            "beauty and personal care",
+        ],
+
+        "electronics and gadgets": [
+            "electronics",
+            "gadgets",
+            "electronics and gadgets",
+        ],
+
+        "home and living": [
+            "home",
+            "living",
+            "home and living",
+        ],
+
+        "fashion and clothing": [
+            "fashion",
+            "clothing",
+            "fashion and clothing",
+        ],
+
+        "gifts and lifestyle": [
+            "gifts",
+            "lifestyle",
+            "gifts and lifestyle",
+        ],
+    };
+
+    const possible = aliases[selected] || [];
+
+    return possible.includes(product);
+}
+
+function customerCategoryFallbackImage(category) {
+    const found = CUSTOMER_CATEGORIES.find(
+        c => customerNormalize(c.name) === customerNormalize(category)
+    );
+
+    if (found) {
+        return found.image;
+    }
+
+    const normalized = customerNormalize(category);
+
+    if (
+        normalized.includes("shoe") ||
+        normalized.includes("footwear")
+    ) {
+        return "/static/images/home/shoes.jpg";
+    }
+
+    if (
+        normalized.includes("fashion") ||
+        normalized.includes("clothing")
+    ) {
+        return "/static/images/home/fashion.jpg";
+    }
+
+    if (
+        normalized.includes("jewel") ||
+        normalized.includes("accessor")
+    ) {
+        return "/static/images/home/jewellery.jpg";
+    }
+
+    if (
+        normalized.includes("beauty") ||
+        normalized.includes("personal care")
+    ) {
+        return "/static/images/home/beauty.jpg";
+    }
+
+    if (normalized.includes("bag")) {
+        return "/static/images/home/bags.jpg";
+    }
+
+    if (
+        normalized.includes("electronic") ||
+        normalized.includes("gadget")
+    ) {
+        return "/static/images/home/electronics.jpg";
+    }
+
+    return "/static/images/home/home-living.jpg";
+}
+
+/* =========================================================
    CUSTOMER CART
-========================= */
+========================================================= */
 
 function customerCartKey() {
     return `aura_cart_${me?.id || "guest"}_${biz?.id || "store"}`;
 }
-
 
 function loadCustomerCart() {
     try {
@@ -33,7 +209,6 @@ function loadCustomerCart() {
     }
 }
 
-
 function saveCustomerCart() {
     localStorage.setItem(
         customerCartKey(),
@@ -41,10 +216,9 @@ function saveCustomerCart() {
     );
 }
 
-
-/* =========================
+/* =========================================================
    CUSTOMER SIGNUP
-========================= */
+========================================================= */
 
 async function loadCustomerBusinesses() {
     const select = document.querySelector("#su-business-id");
@@ -60,23 +234,20 @@ async function loadCustomerBusinesses() {
             '<option value="">Choose a store</option>' +
             businesses
                 .map(
-                    b =>
-                        `<option value="${b.id}">
+                    b => `
+                        <option value="${b.id}">
                             ${esc(b.name)} · ${esc(b.currency)}
-                        </option>`
+                        </option>
+                    `
                 )
                 .join("");
-
-    } catch (e) {
-
+    } catch {
         select.innerHTML =
             '<option value="">Could not load stores</option>';
     }
 }
 
-
 function setAccountType(type) {
-
     const owner = type === "owner";
 
     document
@@ -106,13 +277,11 @@ function setAccountType(type) {
     }
 }
 
-
-/* =========================
+/* =========================================================
    SIGNUP SCREEN
-========================= */
+========================================================= */
 
 window.setAuthMode = function (signup = false) {
-
     if (!signup) {
         auraOriginalSetAuthMode(false);
         return;
@@ -126,15 +295,12 @@ window.setAuthMode = function (signup = false) {
         .querySelector("#signup-tab")
         ?.classList.add("active");
 
-
     document.querySelector("#auth-panel").innerHTML = `
-
         <form
             id="signup-form"
             class="auth-form"
             data-account-type="owner"
         >
-
             <div class="eyebrow">
                 JOIN AURA
             </div>
@@ -142,28 +308,20 @@ window.setAuthMode = function (signup = false) {
             <h1>Create your account</h1>
 
             <p>
-                Choose whether you are creating a business workspace
-                or joining a store as a customer.
+                Choose whether you are creating a business
+                workspace or joining a store as a customer.
             </p>
 
-
             <div class="customer-account-switch">
-
                 <button
                     type="button"
                     id="account-owner"
                     class="customer-choice active"
                     onclick="setAccountType('owner')"
                 >
-                    <strong>
-                        Business Owner
-                    </strong>
-
-                    <small>
-                        Create and manage a business
-                    </small>
+                    <strong>Business Owner</strong>
+                    <small>Create and manage a business</small>
                 </button>
-
 
                 <button
                     type="button"
@@ -171,58 +329,34 @@ window.setAuthMode = function (signup = false) {
                     class="customer-choice"
                     onclick="setAccountType('customer')"
                 >
-                    <strong>
-                        Customer
-                    </strong>
-
-                    <small>
-                        Browse products and place orders
-                    </small>
+                    <strong>Customer</strong>
+                    <small>Browse products and place orders</small>
                 </button>
-
             </div>
 
-
             <div class="form-grid">
-
                 <div class="field full">
-
-                    <label>
-                        Full name
-                    </label>
-
+                    <label>Full name</label>
                     <input
                         id="su-name"
                         required
                         minlength="2"
                         autocomplete="name"
                     >
-
                 </div>
 
-
                 <div class="field full">
-
-                    <label>
-                        Email
-                    </label>
-
+                    <label>Email</label>
                     <input
                         id="su-email"
                         type="email"
                         required
                         autocomplete="email"
                     >
-
                 </div>
 
-
                 <div class="field full">
-
-                    <label>
-                        Password
-                    </label>
-
+                    <label>Password</label>
                     <input
                         id="su-password"
                         type="password"
@@ -230,58 +364,39 @@ window.setAuthMode = function (signup = false) {
                         required
                         autocomplete="new-password"
                     >
-
                 </div>
-
             </div>
 
-
             <div id="owner-fields">
-
                 <div
                     class="field full"
                     style="margin-top:12px"
                 >
-
-                    <label>
-                        Business name
-                    </label>
-
+                    <label>Business name</label>
                     <input
                         id="su-business"
                         minlength="2"
                         autocomplete="organization"
                     >
-
                 </div>
-
             </div>
-
 
             <div
                 id="customer-fields"
                 class="hidden"
             >
-
                 <div
                     class="field full"
                     style="margin-top:12px"
                 >
-
-                    <label>
-                        Store
-                    </label>
+                    <label>Store</label>
 
                     <select id="su-business-id">
-
                         <option value="">
                             Loading stores…
                         </option>
-
                     </select>
-
                 </div>
-
 
                 <div
                     class="top-note"
@@ -290,1523 +405,354 @@ window.setAuthMode = function (signup = false) {
                     Your customer account will be connected
                     to the selected store.
                 </div>
-
             </div>
-
 
             <p
                 id="auth-error"
                 class="error"
             ></p>
 
-
-            <button
-                class="btn btn-primary btn-full"
-            >
+            <button class="btn btn-primary btn-full">
                 Create account
             </button>
-
         </form>
     `;
 
-
-    document
-        .querySelector("#signup-form")
-        .onsubmit = async e => {
-
+    document.querySelector("#signup-form").onsubmit =
+        async e => {
             e.preventDefault();
-
             await authSubmit(true);
         };
 };
 
-
-/* =========================
-   LOGIN / SIGNUP SUBMIT
-========================= */
+/* =========================================================
+   LOGIN / SIGNUP
+========================================================= */
 
 window.authSubmit = async function (signup) {
-
-    const error =
-        document.querySelector("#auth-error");
+    const error = document.querySelector("#auth-error");
 
     if (error) {
         error.textContent = "";
     }
 
-
     try {
-
-        /* LOGIN */
-
         if (!signup) {
-
             me = await api(
                 "/api/auth/signin",
                 {
                     method: "POST",
-
                     body: {
                         email:
-                            document.querySelector(
-                                "#si-email"
-                            ).value,
-
+                            document.querySelector("#si-email").value,
                         password:
-                            document.querySelector(
-                                "#si-password"
-                            ).value
-                    }
+                            document.querySelector("#si-password").value,
+                    },
                 }
             );
-
-        }
-
-
-        /* SIGNUP */
-
-        else {
-
+        } else {
             const form =
-                document.querySelector(
-                    "#signup-form"
-                );
+                document.querySelector("#signup-form");
 
             const type =
-                form?.dataset.accountType ||
-                "owner";
-
-
-            /* CUSTOMER SIGNUP */
+                form?.dataset.accountType || "owner";
 
             if (type === "customer") {
-
-                const businessId =
-                    Number(
-                        document.querySelector(
-                            "#su-business-id"
-                        ).value
-                    );
-
+                const businessId = Number(
+                    document.querySelector("#su-business-id").value
+                );
 
                 if (!businessId) {
-
-                    throw new Error(
-                        "Please choose a store."
-                    );
+                    throw new Error("Please choose a store.");
                 }
-
 
                 me = await api(
                     "/api/auth/customer-signup",
                     {
                         method: "POST",
-
                         body: {
-
                             full_name:
-                                document.querySelector(
-                                    "#su-name"
-                                ).value,
-
+                                document.querySelector("#su-name").value,
                             email:
-                                document.querySelector(
-                                    "#su-email"
-                                ).value,
-
+                                document.querySelector("#su-email").value,
                             password:
-                                document.querySelector(
-                                    "#su-password"
-                                ).value,
-
-                            business_id:
-                                businessId
-                        }
+                                document.querySelector("#su-password").value,
+                            business_id: businessId,
+                        },
                     }
                 );
-
-            }
-
-
-            /* OWNER SIGNUP */
-
-            else {
-
+            } else {
                 const businessName =
-                    document.querySelector(
-                        "#su-business"
-                    ).value.trim();
-
+                    document
+                        .querySelector("#su-business")
+                        .value
+                        .trim();
 
                 if (!businessName) {
-
                     throw new Error(
                         "Please enter your business name."
                     );
                 }
 
-
                 me = await api(
                     "/api/auth/signup",
                     {
                         method: "POST",
-
                         body: {
-
                             full_name:
-                                document.querySelector(
-                                    "#su-name"
-                                ).value,
-
+                                document.querySelector("#su-name").value,
                             email:
-                                document.querySelector(
-                                    "#su-email"
-                                ).value,
-
+                                document.querySelector("#su-email").value,
                             password:
-                                document.querySelector(
-                                    "#su-password"
-                                ).value,
-
-                            business_name:
-                                businessName
-                        }
+                                document.querySelector("#su-password").value,
+                            business_name: businessName,
+                        },
                     }
                 );
             }
         }
 
-
         await enter();
-
     } catch (e) {
-
         if (error) {
-            error.textContent =
-                e.message;
+            error.textContent = e.message;
         }
     }
 };
 
+/* =========================================================
+   CATEGORY BUTTON
+========================================================= */
 
-/* =========================
-   PRODUCT CARD
-========================= */
-
-function customerProductCard(p) {
-
-    const img =
-        p.images?.find(
-            x => x.is_primary
-        ) ||
-        p.images?.[0];
-
-
-    const unavailable =
-        !p.is_available ||
-        p.stock <= 0;
-
+function customerCategoryButton(category) {
+    const active =
+        customerSelectedCategory === category.name;
 
     return `
+        <button
+            type="button"
+            class="customer-category ${active ? "active" : ""}"
+            onclick="selectCustomerCategory(${JSON.stringify(category.name)})"
+        >
+            <span class="customer-category-icon">
+                ${category.icon}
+            </span>
 
-        <article class="customer-product card">
+            <span class="customer-category-name">
+                ${esc(category.name)}
+            </span>
+        </button>
+    `;
+}
 
+function selectCustomerCategory(categoryName) {
+    customerSelectedCategory = categoryName;
+
+    renderCustomerCategories();
+    renderCustomerProducts();
+}
+
+function renderCustomerCategories() {
+    const root =
+        document.querySelector("#customer-categories");
+
+    if (!root) {
+        return;
+    }
+
+    root.innerHTML = `
+        <button
+            type="button"
+            class="customer-category ${
+                customerSelectedCategory === "All Products"
+                    ? "active"
+                    : ""
+            }"
+            onclick="selectCustomerCategory('All Products')"
+        >
+            <span class="customer-category-icon">
+                ✦
+            </span>
+
+            <span class="customer-category-name">
+                All Products
+            </span>
+        </button>
+
+        ${CUSTOMER_CATEGORIES
+            .map(customerCategoryButton)
+            .join("")}
+    `;
+}
+
+/* =========================================================
+   PRODUCT IMAGE
+========================================================= */
+
+function customerProductImage(p) {
+    const img =
+        p.images?.find(x => x.is_primary) ||
+        p.images?.[0];
+
+    const fallback =
+        customerCategoryFallbackImage(p.category);
+
+    if (!img) {
+        return `
             <div class="customer-product-image">
+                <img
+                    src="${fallback}"
+                    alt="${esc(p.name)}"
+                    loading="lazy"
+                    onerror="this.style.display='none';"
+                >
 
-                ${
-                    img
-
-                        ? `
-                            <img
-                                src="${img.url}"
-                                alt="${esc(p.name)}"
-                                loading="lazy"
-                            >
-                          `
-
-                        : `
-                            <div class="customer-no-image">
-                                AURA
-                            </div>
-                          `
-                }
-
+                <div class="customer-image-fallback">
+                    <span>AURA</span>
+                </div>
             </div>
+        `;
+    }
 
+    return `
+        <div class="customer-product-image">
+            <img
+                src="${esc(img.url)}"
+                alt="${esc(p.name)}"
+                loading="lazy"
+                onerror="
+                    this.onerror=null;
+                    this.src='${fallback}';
+                "
+            >
+
+            <div class="customer-image-fallback">
+                <span>${esc(p.category || "AURA")}</span>
+            </div>
+        </div>
+    `;
+}
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
+
+function customerProductCard(p) {
+    const unavailable =
+        !p.is_available ||
+        Number(p.stock) <= 0;
+
+    return `
+        <article class="customer-product">
+            ${customerProductImage(p)}
 
             <div class="customer-product-body">
 
-                <div class="small muted">
-                    ${esc(
-                        p.category ||
-                        "Product"
-                    )}
+                <div class="customer-product-category">
+                    ${esc(p.category || "Product")}
                 </div>
-
 
                 <h3>
                     ${esc(p.name)}
                 </h3>
 
-
                 <p>
                     ${esc(
                         p.description ||
-                        "No description provided."
+                        "A beautiful product from the AURA collection."
                     )}
                 </p>
 
-
                 <div class="customer-product-footer">
-
-                    <strong class="price">
+                    <strong class="customer-price">
                         ${money(p.price)}
                     </strong>
 
-
-                    <span class="small muted">
-
+                    <span class="customer-stock">
                         ${
                             unavailable
-
                                 ? "Unavailable"
-
                                 : `${p.stock} in stock`
                         }
-
                     </span>
-
                 </div>
 
-
                 <button
-                    class="btn btn-primary btn-full"
-                    style="margin-top:12px"
-
-                    ${unavailable ? "disabled" : ""}
-
-                    onclick="
-                        addToCustomerCart(${p.id})
-                    "
+                    class="btn btn-primary btn-full customer-add-button"
+                    ${
+                        unavailable
+                            ? "disabled"
+                            : ""
+                    }
+                    onclick="addToCustomerCart(${p.id})"
                 >
-
                     ${
                         unavailable
                             ? "Unavailable"
                             : "Add to cart"
                     }
-
                 </button>
 
             </div>
-
         </article>
     `;
 }
 
-
-/* =========================
-   CUSTOMER STORE
-========================= */
-
-async function customerStorePage() {
-
-    try {
-
-        const [
-            ps,
-            business
-        ] = await Promise.all([
-
-            api("/api/products"),
-
-            api("/api/business")
-
-        ]);
-
-
-        productsCache = ps;
-
-        biz = business;
-
-        currency =
-            biz.currency;
-
-
-        loadCustomerCart();
-
-
-        document.querySelector(
-            "#page"
-        ).innerHTML = `
-
-
-            <div class="customer-store-head">
-
-                <div>
-
-                    <div class="eyebrow">
-
-                        WELCOME TO
-                        ${esc(
-                            biz.name
-                        ).toUpperCase()}
-
-                    </div>
-
-
-                    <h1>
-                        Shop the store
-                    </h1>
-
-
-                    <p>
-                        Browse available products,
-                        add them to your cart
-                        and place your order.
-                    </p>
-
-                </div>
-
-
-                <button
-                    class="btn btn-primary"
-                    onclick="openCustomerCart()"
-                >
-
-                    🛒 Cart
-
-                    <span
-                        id="customer-cart-count"
-                        class="customer-cart-count"
-                    >
-                        0
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            <div class="customer-store-layout">
-
-
-                <section>
-
-                    <div
-                        class="customer-product-grid"
-                    >
-
-                        ${
-                            ps.map(
-                                customerProductCard
-                            ).join("")
-
-                            ||
-
-                            `
-                                <div class="empty">
-                                    This store has
-                                    no products yet.
-                                </div>
-                            `
-                        }
-
-                    </div>
-
-                </section>
-
-
-                <aside
-                    class="
-                        card
-                        customer-cart-panel
-                    "
-                >
-
-                    <div class="card-title">
-
-                        <h3>
-                            Your cart
-                        </h3>
-
-
-                        <span
-                            id="customer-cart-total-items"
-                            class="status"
-                        >
-                            0 items
-                        </span>
-
-                    </div>
-
-
-                    <div
-                        id="customer-cart-content"
-                    ></div>
-
-                </aside>
-
-            </div>
-
-        `;
-
-
-        renderCustomerCart();
-
-
-    } catch (e) {
-
-        document.querySelector(
-            "#page"
-        ).innerHTML = `
-
-            <div class="empty">
-
-                <h2>
-                    Store could not be loaded
-                </h2>
-
-                <p>
-                    ${esc(e.message)}
-                </p>
-
-                <button
-                    class="btn btn-primary"
-                    onclick="
-                        customerStorePage()
-                    "
-                >
-                    Try again
-                </button>
-
-            </div>
-        `;
-    }
-}
-
-
-/* =========================
-   ADD TO CART
-========================= */
-
-function addToCustomerCart(
-    productId
-) {
-
-    const product =
-        productsCache.find(
-            p => p.id === productId
-        );
-
-
-    if (
-        !product ||
-        !product.is_available ||
-        product.stock <= 0
-    ) {
-        return;
-    }
-
-
-    const existing =
-        customerCart.find(
-            x =>
-                x.product_id ===
-                productId
-        );
-
-
-    if (existing) {
-
-        if (
-            existing.quantity >=
-            product.stock
-        ) {
-
-            toast(
-                "You cannot add more than available stock.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        existing.quantity += 1;
-
-    } else {
-
-        customerCart.push({
-
-            product_id:
-                productId,
-
-            quantity:
-                1
-
-        });
-    }
-
-
-    saveCustomerCart();
-
-    renderCustomerCart();
-
-
-    toast(
-        `${product.name} added to cart`
-    );
-}
-
-
-/* =========================
-   CHANGE QUANTITY
-========================= */
-
-function changeCustomerCart(
-    productId,
-    delta
-) {
-
-    const row =
-        customerCart.find(
-            x =>
-                x.product_id ===
-                productId
-        );
-
-
-    const product =
-        productsCache.find(
-            p =>
-                p.id ===
-                productId
-        );
-
-
-    if (!row || !product) {
-        return;
-    }
-
-
-    row.quantity += delta;
-
-
-    if (
-        row.quantity <= 0
-    ) {
-
-        customerCart =
-            customerCart.filter(
-                x =>
-                    x.product_id !==
-                    productId
-            );
-
-    }
-
-    else if (
-        row.quantity >
-        product.stock
-    ) {
-
-        row.quantity =
-            product.stock;
-
-
-        toast(
-            "Quantity limited to available stock.",
-            "error"
-        );
-    }
-
-
-    saveCustomerCart();
-
-    renderCustomerCart();
-}
-
-
-/* =========================
-   REMOVE FROM CART
-========================= */
-
-function removeFromCustomerCart(
-    productId
-) {
-
-    customerCart =
-        customerCart.filter(
-            x =>
-                x.product_id !==
-                productId
-        );
-
-
-    saveCustomerCart();
-
-    renderCustomerCart();
-}
-
-
-/* =========================
-   RENDER CART
-========================= */
-
-function renderCustomerCart() {
-
-    const content =
-        document.querySelector(
-            "#customer-cart-content"
-        );
-
-
-    if (!content) {
-        return;
-    }
-
-
-    const count =
-        customerCart.reduce(
-            (
-                sum,
-                x
-            ) =>
-                sum +
-                Number(
-                    x.quantity || 0
-                ),
-            0
-        );
-
-
-    const countEl =
-        document.querySelector(
-            "#customer-cart-count"
-        );
-
-
-    const totalItemsEl =
-        document.querySelector(
-            "#customer-cart-total-items"
-        );
-
-
-    if (countEl) {
-        countEl.textContent =
-            count;
-    }
-
-
-    if (totalItemsEl) {
-
-        totalItemsEl.textContent =
-            `${count} item${
-                count === 1
-                    ? ""
-                    : "s"
-            }`;
-    }
-
-
-    if (!customerCart.length) {
-
-        content.innerHTML = `
-
-            <div class="customer-empty-cart">
-
-                <div class="customer-empty-icon">
-                    🛒
-                </div>
-
-                <b>
-                    Your cart is empty
-                </b>
-
-                <span>
-                    Add products to start
-                    your order.
-                </span>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    let total = 0;
-
-
-    const rows =
-        customerCart
-            .map(item => {
-
-                const p =
-                    productsCache.find(
-                        product =>
-                            product.id ===
-                            item.product_id
-                    );
-
-
-                if (!p) {
-                    return "";
-                }
-
-
-                const line =
-                    Number(p.price) *
-                    Number(
-                        item.quantity
-                    );
-
-
-                total += line;
-
-
-                return `
-
-                    <div
-                        class="customer-cart-row"
-                    >
-
-                        <div>
-
-                            <b>
-                                ${esc(
-                                    p.name
-                                )}
-                            </b>
-
-                            <small>
-                                ${money(
-                                    p.price
-                                )}
-                                each
-                            </small>
-
-                        </div>
-
-
-                        <div
-                            class="customer-qty"
-                        >
-
-                            <button
-                                onclick="
-                                    changeCustomerCart(
-                                        ${p.id},
-                                        -1
-                                    )
-                                "
-                            >
-                                −
-                            </button>
-
-
-                            <span>
-                                ${item.quantity}
-                            </span>
-
-
-                            <button
-                                onclick="
-                                    changeCustomerCart(
-                                        ${p.id},
-                                        1
-                                    )
-                                "
-                            >
-                                +
-                            </button>
-
-                        </div>
-
-
-                        <strong>
-                            ${money(line)}
-                        </strong>
-
-
-                        <button
-                            class="customer-remove"
-                            onclick="
-                                removeFromCustomerCart(
-                                    ${p.id}
-                                )
-                            "
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-                `;
-
-            })
-            .join("");
-
-
-    content.innerHTML = `
-
-        <div>
-            ${rows}
-        </div>
-
-
-        <div
-            class="customer-cart-summary"
-        >
-
-            <span>
-                Total
-            </span>
-
-            <strong>
-                ${money(total)}
-            </strong>
-
-        </div>
-
-
-        <button
-            class="
-                btn
-                btn-primary
-                btn-full
-            "
-            onclick="
-                openCustomerCheckout()
-            "
-        >
-            Checkout
-        </button>
-
-    `;
-}
-
-
-/* =========================
-   CART BUTTON
-========================= */
-
-function openCustomerCart() {
-
-    document
-        .querySelector(
-            ".customer-cart-panel"
-        )
-        ?.scrollIntoView({
-
-            behavior:
-                "smooth",
-
-            block:
-                "start"
-        });
-}
-
-
-/* =========================
-   CHECKOUT
-========================= */
-
-function openCustomerCheckout() {
-
-    if (!customerCart.length) {
-
-        toast(
-            "Your cart is empty.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const total =
-        customerCart.reduce(
-            (
-                sum,
-                item
-            ) => {
-
-                const p =
-                    productsCache.find(
-                        product =>
-                            product.id ===
-                            item.product_id
-                    );
-
-
-                return (
-                    sum +
-                    (
-                        p
-                            ? Number(
-                                p.price
-                              ) *
-                              item.quantity
-                            : 0
-                    )
-                );
-
-            },
-            0
-        );
-
-
-    openModal(`
-
-        <div class="eyebrow">
-            CHECKOUT
-        </div>
-
-
-        <h2>
-            Place your order
-        </h2>
-
-
-        <p class="muted small">
-            Review your order and add
-            an optional note for the store.
-        </p>
-
-
-        <div
-            class="
-                customer-checkout-items
-            "
-        >
-
-            ${
-                customerCart
-                    .map(item => {
-
-                        const p =
-                            productsCache.find(
-                                product =>
-                                    product.id ===
-                                    item.product_id
-                            );
-
-
-                        if (!p) {
-                            return "";
-                        }
-
-
-                        return `
-
-                            <div>
-
-                                <span>
-                                    ${esc(
-                                        p.name
-                                    )}
-                                    ×
-                                    ${item.quantity}
-                                </span>
-
-                                <strong>
-                                    ${money(
-                                        Number(
-                                            p.price
-                                        ) *
-                                        item.quantity
-                                    )}
-                                </strong>
-
-                            </div>
-
-                        `;
-
-                    })
-                    .join("")
-            }
-
-        </div>
-
-
-        <div
-            class="
-                customer-checkout-total
-            "
-        >
-
-            <span>
-                Total
-            </span>
-
-            <strong>
-                ${money(total)}
-            </strong>
-
-        </div>
-
-
-        <div
-            class="field"
-            style="margin-top:14px"
-        >
-
-            <label>
-                Order note (optional)
-            </label>
-
-            <textarea
-                id="customer-order-note"
-                rows="3"
-                placeholder="
-                    Delivery instructions
-                    or a note for the store
-                "
-            ></textarea>
-
-        </div>
-
-
-        <div class="form-actions">
-
-            <button
-                class="ghost"
-                onclick="closeModal()"
-            >
-                Cancel
-            </button>
-
-
-            <button
-                class="btn btn-primary"
-                onclick="
-                    submitCustomerOrder()
-                "
-            >
-                Place order
-            </button>
-
-        </div>
-
-    `);
-}
-
-
-/* =========================
-   PLACE ORDER
-========================= */
-
-async function submitCustomerOrder() {
-
-    try {
-
-        const note =
-            document.querySelector(
-                "#customer-order-note"
-            )?.value.trim() ||
-            null;
-
-
-        const order =
-            await api(
-                "/api/orders",
-                {
-                    method: "POST",
-
-                    body: {
-
-                        items:
-                            customerCart,
-
-                        notes:
-                            note
-                    }
-                }
-            );
-
-
-        customerCart = [];
-
-        saveCustomerCart();
-
-        closeModal();
-
-
-        toast(
-            `Order #${order.id} placed successfully`
-        );
-
-
-        setTimeout(
-            () => {
-                route("orders");
-            },
-            250
-        );
-
-
-    } catch (e) {
-
-        toast(
-            e.message,
-            "error"
-        );
-    }
-}
-
-
-/* =========================
-   CUSTOMER SHELL
-========================= */
-
-window.renderShell = function () {
-
-    if (
-        me?.role !==
-        "customer"
-    ) {
-
-        return auraOriginalRenderShell();
-    }
-
-
-    const initial =
-        (me.full_name || "C")
-            .split(" ")
-            .map(
-                x => x[0]
-            )
-            .slice(0, 2)
-            .join("")
-            .toUpperCase();
-
-
-    document.querySelector(
-        "#business-mini"
-    ).innerHTML = `
-
-        <b>
-            ${esc(biz.name)}
-        </b>
-
-        <span>
-            Customer ·
-            ${esc(biz.currency)}
-        </span>
-
-    `;
-
-
-    document.querySelector(
-        "#user-menu"
-    ).innerHTML = `
-
-        <span class="avatar">
-            ${initial}
-        </span>
-
-        <span class="user-meta">
-
-            <b>
-                ${esc(
-                    me.full_name
-                )}
-            </b>
-
-            <small>
-                Customer
-            </small>
-
-        </span>
-
-    `;
-
-
-    document.querySelector(
-        "#main-nav"
-    ).innerHTML = `
-
-        <div class="nav-group">
-            Store
-        </div>
-
-
-        <button
-            class="nav-item"
-            data-page="store"
-        >
-
-            <span class="nav-icon">
-                ◈
-            </span>
-
-            Shop
-
-        </button>
-
-
-        <button
-            class="nav-item"
-            data-page="orders"
-        >
-
-            <span class="nav-icon">
-                ↗
-            </span>
-
-            My Orders
-
-        </button>
-
-
-        <div class="nav-group">
-            Account
-        </div>
-
-
-        <button
-            class="nav-item"
-            data-page="profile"
-        >
-
-            <span class="nav-icon">
-                ○
-            </span>
-
-            Profile
-
-        </button>
-
-    `;
-
-
-    document
-        .querySelectorAll(
-            ".nav-item"
-        )
-        .forEach(
-            button => {
-
-                button.onclick =
-                    () => {
-
-                        route(
-                            button.dataset.page
-                        );
-
-                        closeSide();
-                    };
-            }
-        );
-};
-
-
-/* =========================
-   CUSTOMER ROUTES
-========================= */
-
-window.route = function (p) {
-
-    if (
-        me?.role !==
-        "customer"
-    ) {
-
-        return auraOriginalRoute(p);
-    }
-
-
-    const page =
-        p === "dashboard" ||
-        p === "store"
-
-            ? "store"
-
-            : p;
-
-
-    const pages = {
-
-        store:
-            customerStorePage,
-
-        orders:
-            ordersPage,
-
-        profile:
-            profilePage
-    };
-
-
-    if (!pages[page]) {
-
-        return window.route(
-            "store"
-        );
-    }
-
-
-    currentPage =
-        page;
-
-
-    document
-        .querySelectorAll(
-            ".nav-item"
-        )
-        .forEach(
-            button =>
-                button.classList.toggle(
-                    "active",
-                    button.dataset.page ===
-                        page
-                )
-        );
-
-
-    document.querySelector(
-        "#breadcrumb"
-    ).textContent =
-
-        "AURA / " +
-
-        (
-            page === "store"
-
-                ? "SHOP"
-
-                : page
-                    .replace(
-                        "-",
-                        " "
-                    )
-                    .toUpperCase()
-        );
-
-
-    pages[page]();
-
-
-    history.replaceState(
-        null,
-        "",
-        "/app?page=" +
-            page
-    );
-};
-
-
-/* =========================
-   AUTO OPEN CUSTOMER SIGNUP
-========================= */
-
-const customerUpgradeInit =
-    () => {
-
-        const signup =
-            new URLSearchParams(
-                location.search
-            ).get("auth") ===
-            "signup";
-
-
-        if (
-
-            document.querySelector(
-                "#auth-screen"
-            ) &&
-
-            !document
-                .querySelector(
-                    "#auth-screen"
-                )
-                .classList
-                .contains("hidden") &&
-
-            signup
-
-        ) {
-
-            window.setAuthMode(
-                true
-            );
-        }
-    };
-
-
-setTimeout(
-    customerUpgradeInit,
-    0
-);
-
-
-
-
-
-
 /* =========================================================
-   AURA STAGE 2
-   CUSTOMER CATEGORIES + IMPROVED CHECKOUT
+   FILTERED PRODUCTS
 ========================================================= */
 
-let stage2SelectedCategory = "all";
-
-
-function stage2CategoryName(categoryId) {
-    const category = categoriesCache.find(
-        c => Number(c.id) === Number(categoryId)
+function getFilteredCustomerProducts() {
+    return productsCache.filter(product =>
+        customerCategoryMatches(
+            product.category,
+            customerSelectedCategory
+        )
     );
-
-    return category
-        ? category.name
-        : "All Products";
 }
 
+function renderCustomerProducts() {
+    const grid =
+        document.querySelector(
+            "#customer-product-grid"
+        );
 
-function stage2SelectCategory(categoryId) {
-    stage2SelectedCategory =
-        categoryId === "all"
-            ? "all"
-            : Number(categoryId);
+    const title =
+        document.querySelector(
+            "#customer-collection-title"
+        );
 
-    stage2RenderProducts();
-}
-
-
-function stage2RenderProducts() {
-    const grid = document.querySelector(
-        "#stage2-product-grid"
-    );
+    const count =
+        document.querySelector(
+            "#customer-product-count"
+        );
 
     if (!grid) {
         return;
     }
 
-    let products = productsCache || [];
+    const products =
+        getFilteredCustomerProducts();
 
-    if (stage2SelectedCategory !== "all") {
-        products = products.filter(
-            product =>
-                Number(product.category_id) ===
-                Number(stage2SelectedCategory)
-        );
+    if (title) {
+        title.textContent =
+            customerSelectedCategory;
     }
 
-    grid.innerHTML =
-        products.map(
-            customerProductCard
-        ).join("")
-        ||
-        `
-            <div
-                class="customer-category-empty"
-                style="grid-column:1/-1"
-            >
-                <div class="customer-category-empty-icon">
-                    ◈
+    if (count) {
+        count.textContent =
+            `${products.length} ${
+                products.length === 1
+                    ? "product"
+                    : "products"
+            }`;
+    }
+
+    if (!products.length) {
+        grid.innerHTML = `
+            <div class="customer-no-products">
+                <div class="customer-no-products-icon">
+                    ◇
                 </div>
 
                 <h3>
@@ -1814,47 +760,30 @@ function stage2RenderProducts() {
                 </h3>
 
                 <p>
-                    Please check another category.
+                    Try another category or browse
+                    all products.
                 </p>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="selectCustomerCategory('All Products')"
+                >
+                    View all products
+                </button>
             </div>
         `;
 
-    document
-        .querySelectorAll(
-            ".stage2-category-button"
-        )
-        .forEach(button => {
-            const buttonCategory =
-                button.dataset.category;
-
-            const active =
-                buttonCategory ===
-                String(stage2SelectedCategory);
-
-            button.classList.toggle(
-                "active",
-                active
-            );
-        });
-
-    const heading =
-        document.querySelector(
-            "#stage2-category-heading"
-        );
-
-    if (heading) {
-        heading.textContent =
-            stage2SelectedCategory === "all"
-                ? "All Products"
-                : stage2CategoryName(
-                    stage2SelectedCategory
-                );
+        return;
     }
+
+    grid.innerHTML =
+        products
+            .map(customerProductCard)
+            .join("");
 }
 
-
 /* =========================================================
-   CUSTOMER STORE PAGE
+   CUSTOMER STORE
 ========================================================= */
 
 async function customerStorePage() {
@@ -1862,226 +791,138 @@ async function customerStorePage() {
         const [
             products,
             business,
-            categories
         ] = await Promise.all([
             api("/api/products"),
             api("/api/business"),
-            api("/api/categories")
         ]);
 
-        productsCache = products;
-        categoriesCache = categories;
+        productsCache = Array.isArray(products)
+            ? products
+            : [];
 
         biz = business;
-        currency = biz.currency;
+        currency = biz.currency || "PKR";
+
+        customerSelectedCategory =
+            "All Products";
 
         loadCustomerCart();
 
-        stage2SelectedCategory = "all";
+        document.querySelector("#page").innerHTML = `
+            <div class="customer-store-page">
 
-        document.querySelector(
-            "#page"
-        ).innerHTML = `
-            <div class="customer-store-head">
-                <div>
-                    <div class="eyebrow">
-                        WELCOME TO
-                        ${esc(
-                            biz.name
-                        ).toUpperCase()}
+                <div class="customer-store-hero">
+
+                    <div>
+                        <div class="eyebrow">
+                            AURA COLLECTION
+                        </div>
+
+                        <h1>
+                            Discover something
+                            <em>beautiful.</em>
+                        </h1>
+
+                        <p>
+                            Explore ${esc(
+                                biz.name
+                            )}'s collection and find
+                            products made for your everyday life.
+                        </p>
                     </div>
 
-                    <h1>
-                        Discover your next favourite
-                    </h1>
-
-                    <p>
-                        Browse our collections,
-                        choose your products
-                        and place your order.
-                    </p>
-                </div>
-
-                <button
-                    class="btn btn-primary"
-                    onclick="openCustomerCart()"
-                >
-                    🛒 Cart
-                    <span
-                        id="customer-cart-count"
-                        class="customer-cart-count"
-                    >
-                        0
-                    </span>
-                </button>
-            </div>
-
-
-            <section
-                class="customer-category-section"
-            >
-                <div class="customer-section-label">
-                    SHOP BY CATEGORY
-                </div>
-
-                <div
-                    class="customer-category-list"
-                >
-
                     <button
-                        class="
-                            stage2-category-button
-                            active
-                        "
-                        data-category="all"
-                        onclick="
-                            stage2SelectCategory('all')
-                        "
+                        class="customer-cart-top"
+                        onclick="openCustomerCart()"
                     >
-                        <span class="category-icon">
-                            ✦
-                        </span>
-
+                        <span>🛒</span>
                         <span>
-                            All Products
+                            Cart
+                            <b id="customer-cart-count">
+                                0
+                            </b>
                         </span>
                     </button>
 
-                    ${
-                        categories
-                            .map(
-                                category => `
-                                    <button
-                                        class="
-                                            stage2-category-button
-                                        "
-                                        data-category="${category.id}"
-                                        onclick="
-                                            stage2SelectCategory(
-                                                ${category.id}
-                                            )
-                                        "
-                                    >
-                                        <span
-                                            class="category-icon"
-                                        >
-                                            ◈
-                                        </span>
-
-                                        <span>
-                                            ${esc(
-                                                category.name
-                                            )}
-                                        </span>
-                                    </button>
-                                `
-                            )
-                            .join("")
-                    }
-
                 </div>
-            </section>
 
+                <section class="customer-category-section">
 
-            <div
-                class="customer-store-content"
-            >
-
-                <section>
-
-                    <div
-                        class="
-                            customer-products-heading
-                        "
-                    >
-                        <div>
-                            <div
-                                class="
-                                    customer-section-label
-                                "
-                            >
-                                COLLECTION
-                            </div>
-
-                            <h2
-                                id="
-                                    stage2-category-heading
-                                "
-                            >
-                                All Products
-                            </h2>
-                        </div>
-
-                        <span
-                            class="small muted"
-                        >
-                            ${
-                                products.length
-                            }
-                            products
-                        </span>
+                    <div class="customer-section-label">
+                        SHOP BY CATEGORY
                     </div>
 
-
                     <div
-                        id="stage2-product-grid"
-                        class="
-                            customer-product-grid
-                            stage2-product-grid
-                        "
+                        id="customer-categories"
+                        class="customer-category-grid"
                     ></div>
 
                 </section>
 
+                <div class="customer-shop-layout">
 
-                <aside
-                    class="
-                        card
-                        customer-cart-panel
-                    "
-                >
-                    <div class="card-title">
-                        <h3>
-                            Your cart
-                        </h3>
+                    <main>
 
-                        <span
-                            id="
-                                customer-cart-total-items
-                            "
-                            class="status"
-                        >
-                            0 items
-                        </span>
-                    </div>
+                        <div class="customer-collection-head">
+                            <div>
+                                <div class="customer-section-label">
+                                    COLLECTION
+                                </div>
 
-                    <div
-                        id="
-                            customer-cart-content
-                        "
-                    ></div>
-                </aside>
+                                <h2
+                                    id="customer-collection-title"
+                                >
+                                    All Products
+                                </h2>
+                            </div>
+
+                            <span
+                                id="customer-product-count"
+                                class="customer-product-count"
+                            >
+                                0 products
+                            </span>
+                        </div>
+
+                        <div
+                            id="customer-product-grid"
+                            class="customer-product-grid"
+                        ></div>
+
+                    </main>
+
+                    <aside
+                        class="customer-cart-panel"
+                    >
+                        <div class="customer-cart-heading">
+                            <h2>Your cart</h2>
+
+                            <span
+                                id="customer-cart-total-items"
+                            >
+                                0 items
+                            </span>
+                        </div>
+
+                        <div
+                            id="customer-cart-content"
+                        ></div>
+                    </aside>
+
+                </div>
 
             </div>
         `;
 
-        stage2RenderProducts();
-
+        renderCustomerCategories();
+        renderCustomerProducts();
         renderCustomerCart();
 
-    } catch (error) {
-
-        document.querySelector(
-            "#page"
-        ).innerHTML = `
+    } catch (e) {
+        document.querySelector("#page").innerHTML = `
             <div class="empty">
-                <h2>
-                    Store could not be loaded
-                </h2>
-
-                <p>
-                    ${esc(error.message)}
-                </p>
+                <h2>Store could not be loaded</h2>
+                <p>${esc(e.message)}</p>
 
                 <button
                     class="btn btn-primary"
@@ -2094,13 +935,313 @@ async function customerStorePage() {
     }
 }
 
+/* =========================================================
+   ADD TO CART
+========================================================= */
+
+function addToCustomerCart(productId) {
+    const product =
+        productsCache.find(
+            p => p.id === productId
+        );
+
+    if (
+        !product ||
+        !product.is_available ||
+        Number(product.stock) <= 0
+    ) {
+        return;
+    }
+
+    const existing =
+        customerCart.find(
+            x => x.product_id === productId
+        );
+
+    if (existing) {
+        if (
+            existing.quantity >=
+            Number(product.stock)
+        ) {
+            toast(
+                "You cannot add more than available stock.",
+                "error"
+            );
+
+            return;
+        }
+
+        existing.quantity += 1;
+    } else {
+        customerCart.push({
+            product_id: productId,
+            quantity: 1,
+        });
+    }
+
+    saveCustomerCart();
+    renderCustomerCart();
+
+    toast(
+        `${product.name} added to cart`
+    );
+}
 
 /* =========================================================
-   IMPROVED CHECKOUT
+   CHANGE CART QUANTITY
+========================================================= */
+
+function changeCustomerCart(
+    productId,
+    delta
+) {
+    const row =
+        customerCart.find(
+            x => x.product_id === productId
+        );
+
+    const product =
+        productsCache.find(
+            p => p.id === productId
+        );
+
+    if (!row || !product) {
+        return;
+    }
+
+    row.quantity += delta;
+
+    if (row.quantity <= 0) {
+        customerCart =
+            customerCart.filter(
+                x =>
+                    x.product_id !==
+                    productId
+            );
+    } else if (
+        row.quantity >
+        Number(product.stock)
+    ) {
+        row.quantity =
+            Number(product.stock);
+
+        toast(
+            "Quantity limited to available stock.",
+            "error"
+        );
+    }
+
+    saveCustomerCart();
+    renderCustomerCart();
+}
+
+/* =========================================================
+   REMOVE FROM CART
+========================================================= */
+
+function removeFromCustomerCart(
+    productId
+) {
+    customerCart =
+        customerCart.filter(
+            x =>
+                x.product_id !==
+                productId
+        );
+
+    saveCustomerCart();
+    renderCustomerCart();
+}
+
+/* =========================================================
+   RENDER CART
+========================================================= */
+
+function renderCustomerCart() {
+    const content =
+        document.querySelector(
+            "#customer-cart-content"
+        );
+
+    if (!content) {
+        return;
+    }
+
+    const count =
+        customerCart.reduce(
+            (sum, item) =>
+                sum +
+                Number(item.quantity || 0),
+            0
+        );
+
+    const countEl =
+        document.querySelector(
+            "#customer-cart-count"
+        );
+
+    const totalItemsEl =
+        document.querySelector(
+            "#customer-cart-total-items"
+        );
+
+    if (countEl) {
+        countEl.textContent = count;
+    }
+
+    if (totalItemsEl) {
+        totalItemsEl.textContent =
+            `${count} ${
+                count === 1
+                    ? "item"
+                    : "items"
+            }`;
+    }
+
+    if (!customerCart.length) {
+        content.innerHTML = `
+            <div class="customer-empty-cart">
+                <div class="customer-empty-icon">
+                    🛍
+                </div>
+
+                <strong>
+                    Your cart is empty
+                </strong>
+
+                <span>
+                    Add something beautiful
+                    to your cart.
+                </span>
+            </div>
+        `;
+
+        return;
+    }
+
+    let total = 0;
+
+    const rows =
+        customerCart
+            .map(item => {
+                const product =
+                    productsCache.find(
+                        p =>
+                            p.id ===
+                            item.product_id
+                    );
+
+                if (!product) {
+                    return "";
+                }
+
+                const line =
+                    Number(product.price) *
+                    Number(item.quantity);
+
+                total += line;
+
+                return `
+                    <div
+                        class="customer-cart-row"
+                    >
+                        <div class="customer-cart-product">
+                            <b>
+                                ${esc(product.name)}
+                            </b>
+
+                            <small>
+                                ${money(product.price)}
+                                each
+                            </small>
+                        </div>
+
+                        <div class="customer-qty">
+                            <button
+                                onclick="
+                                    changeCustomerCart(
+                                        ${product.id},
+                                        -1
+                                    )
+                                "
+                            >
+                                −
+                            </button>
+
+                            <span>
+                                ${item.quantity}
+                            </span>
+
+                            <button
+                                onclick="
+                                    changeCustomerCart(
+                                        ${product.id},
+                                        1
+                                    )
+                                "
+                            >
+                                +
+                            </button>
+                        </div>
+
+                        <strong>
+                            ${money(line)}
+                        </strong>
+
+                        <button
+                            class="customer-remove"
+                            onclick="
+                                removeFromCustomerCart(
+                                    ${product.id}
+                                )
+                            "
+                        >
+                            ×
+                        </button>
+                    </div>
+                `;
+            })
+            .join("");
+
+    content.innerHTML = `
+        <div>
+            ${rows}
+        </div>
+
+        <div class="customer-cart-summary">
+            <span>Total</span>
+            <strong>${money(total)}</strong>
+        </div>
+
+        <button
+            class="btn btn-primary btn-full"
+            onclick="openCustomerCheckout()"
+        >
+            Checkout
+        </button>
+    `;
+}
+
+/* =========================================================
+   CART SCROLL
+========================================================= */
+
+function openCustomerCart() {
+    document
+        .querySelector(
+            ".customer-cart-panel"
+        )
+        ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+}
+
+/* =========================================================
+   CHECKOUT
 ========================================================= */
 
 function openCustomerCheckout() {
-
     if (!customerCart.length) {
         toast(
             "Your cart is empty.",
@@ -2113,7 +1254,6 @@ function openCustomerCheckout() {
     const total =
         customerCart.reduce(
             (sum, item) => {
-
                 const product =
                     productsCache.find(
                         p =>
@@ -2125,19 +1265,14 @@ function openCustomerCheckout() {
                     sum +
                     (
                         product
-                            ? Number(
-                                product.price
-                            ) *
-                            Number(
-                                item.quantity
-                            )
+                            ? Number(product.price) *
+                              Number(item.quantity)
                             : 0
                     )
                 );
             },
             0
         );
-
 
     openModal(`
         <div class="eyebrow">
@@ -2149,18 +1284,13 @@ function openCustomerCheckout() {
         </h2>
 
         <p class="muted small">
-            Enter your delivery details
-            before placing the order.
+            Please enter your delivery details.
         </p>
 
-
-        <div
-            class="customer-checkout-items"
-        >
+        <div class="customer-checkout-items">
             ${
                 customerCart
                     .map(item => {
-
                         const product =
                             productsCache.find(
                                 p =>
@@ -2175,19 +1305,15 @@ function openCustomerCheckout() {
                         return `
                             <div>
                                 <span>
-                                    ${esc(
-                                        product.name
-                                    )}
+                                    ${esc(product.name)}
                                     ×
                                     ${item.quantity}
                                 </span>
 
                                 <strong>
                                     ${money(
-                                        Number(
-                                            product.price
-                                        ) *
-                                        item.quantity
+                                        Number(product.price) *
+                                        Number(item.quantity)
                                     )}
                                 </strong>
                             </div>
@@ -2197,79 +1323,53 @@ function openCustomerCheckout() {
             }
         </div>
 
-
-        <div
-            class="
-                customer-checkout-total
-            "
-        >
-            <span>
-                Total
-            </span>
-
-            <strong>
-                ${money(total)}
-            </strong>
+        <div class="customer-checkout-total">
+            <span>Total</span>
+            <strong>${money(total)}</strong>
         </div>
 
-
         <div
-            class="form-grid"
-            style="margin-top:15px"
+            class="field"
+            style="margin-top:14px"
         >
+            <label>Phone number</label>
 
-            <div class="field full">
-                <label>
-                    Phone number
-                </label>
-
-                <input
-                    id="customer-order-phone"
-                    type="tel"
-                    placeholder="+92 300 1234567"
-                    required
-                >
-            </div>
-
-
-            <div class="field full">
-                <label>
-                    Delivery address
-                </label>
-
-                <textarea
-                    id="customer-order-address"
-                    rows="4"
-                    placeholder="
-House / Street / Area / City
-"
-                    required
-                ></textarea>
-            </div>
-
-
-            <div class="field full">
-                <label>
-                    Order note
-                    <span class="muted">
-                        (optional)
-                    </span>
-                </label>
-
-                <textarea
-                    id="customer-order-note"
-                    rows="3"
-                    placeholder="
-Any delivery instruction
-"
-                ></textarea>
-            </div>
-
+            <input
+                id="customer-phone"
+                type="tel"
+                placeholder="+92 300 0000000"
+                required
+            >
         </div>
 
+        <div
+            class="field"
+            style="margin-top:12px"
+        >
+            <label>Delivery address</label>
+
+            <textarea
+                id="customer-address"
+                rows="3"
+                placeholder="House, street, area, city"
+                required
+            ></textarea>
+        </div>
+
+        <div
+            class="field"
+            style="margin-top:12px"
+        >
+            <label>Order note</label>
+
+            <textarea
+                id="customer-order-note"
+                rows="2"
+                placeholder="Optional delivery instructions"
+            ></textarea>
+        </div>
 
         <div class="form-actions">
-
             <button
                 class="ghost"
                 onclick="closeModal()"
@@ -2279,48 +1379,34 @@ Any delivery instruction
 
             <button
                 class="btn btn-primary"
-                onclick="
-                    submitCustomerOrder()
-                "
+                onclick="submitCustomerOrder()"
             >
                 Place order
             </button>
-
         </div>
     `);
 }
 
-
 /* =========================================================
-   PLACE CUSTOMER ORDER
+   SUBMIT ORDER
 ========================================================= */
 
 async function submitCustomerOrder() {
-
     try {
-
         const phone =
             document
-                .querySelector(
-                    "#customer-order-phone"
-                )
+                .querySelector("#customer-phone")
                 ?.value.trim();
 
         const address =
             document
-                .querySelector(
-                    "#customer-order-address"
-                )
+                .querySelector("#customer-address")
                 ?.value.trim();
 
         const note =
             document
-                .querySelector(
-                    "#customer-order-note"
-                )
-                ?.value.trim()
-                || null;
-
+                .querySelector("#customer-order-note")
+                ?.value.trim();
 
         if (!phone) {
             toast(
@@ -2331,7 +1417,6 @@ async function submitCustomerOrder() {
             return;
         }
 
-
         if (!address) {
             toast(
                 "Please enter your delivery address.",
@@ -2341,29 +1426,27 @@ async function submitCustomerOrder() {
             return;
         }
 
+        const notes = [
+            `Phone: ${phone}`,
+            `Delivery address: ${address}`,
+            note
+                ? `Note: ${note}`
+                : "",
+        ]
+            .filter(Boolean)
+            .join("\n");
 
         const order =
             await api(
                 "/api/orders",
                 {
                     method: "POST",
-
                     body: {
-                        items:
-                            customerCart,
-
-                        phone:
-                            phone,
-
-                        address:
-                            address,
-
-                        notes:
-                            note
-                    }
+                        items: customerCart,
+                        notes,
+                    },
                 }
             );
-
 
         customerCart = [];
 
@@ -2375,19 +1458,206 @@ async function submitCustomerOrder() {
             `Order #${order.id} placed successfully`
         );
 
-
         setTimeout(
-            () => {
-                route("orders");
-            },
-            300
+            () => route("orders"),
+            250
         );
-
-    } catch (error) {
-
+    } catch (e) {
         toast(
-            error.message,
+            e.message,
             "error"
         );
     }
 }
+
+/* =========================================================
+   CUSTOMER SHELL
+========================================================= */
+
+window.renderShell = function () {
+    if (me?.role !== "customer") {
+        return auraOriginalRenderShell();
+    }
+
+    const initial =
+        (me.full_name || "C")
+            .split(" ")
+            .map(x => x[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+
+    document.querySelector(
+        "#business-mini"
+    ).innerHTML = `
+        <b>${esc(biz.name)}</b>
+        <span>
+            Customer · ${esc(biz.currency)}
+        </span>
+    `;
+
+    document.querySelector(
+        "#user-menu"
+    ).innerHTML = `
+        <span class="avatar">
+            ${initial}
+        </span>
+
+        <span class="user-meta">
+            <b>
+                ${esc(me.full_name)}
+            </b>
+
+            <small>
+                Customer
+            </small>
+        </span>
+    `;
+
+    document.querySelector(
+        "#main-nav"
+    ).innerHTML = `
+        <div class="nav-group">
+            Store
+        </div>
+
+        <button
+            class="nav-item"
+            data-page="store"
+        >
+            <span class="nav-icon">
+                ◈
+            </span>
+            Shop
+        </button>
+
+        <button
+            class="nav-item"
+            data-page="orders"
+        >
+            <span class="nav-icon">
+                ↗
+            </span>
+            My Orders
+        </button>
+
+        <div class="nav-group">
+            Account
+        </div>
+
+        <button
+            class="nav-item"
+            data-page="profile"
+        >
+            <span class="nav-icon">
+                ○
+            </span>
+            Profile
+        </button>
+    `;
+
+    document
+        .querySelectorAll(".nav-item")
+        .forEach(button => {
+            button.onclick = () => {
+                route(
+                    button.dataset.page
+                );
+
+                closeSide();
+            };
+        });
+};
+
+/* =========================================================
+   CUSTOMER ROUTES
+========================================================= */
+
+window.route = function (p) {
+    if (me?.role !== "customer") {
+        return auraOriginalRoute(p);
+    }
+
+    const page =
+        p === "dashboard" ||
+        p === "store"
+            ? "store"
+            : p;
+
+    const pages = {
+        store:
+            customerStorePage,
+
+        orders:
+            ordersPage,
+
+        profile:
+            profilePage,
+    };
+
+    if (!pages[page]) {
+        return window.route("store");
+    }
+
+    currentPage = page;
+
+    document
+        .querySelectorAll(".nav-item")
+        .forEach(button => {
+            button.classList.toggle(
+                "active",
+                button.dataset.page === page
+            );
+        });
+
+    document.querySelector(
+        "#breadcrumb"
+    ).textContent =
+        "AURA / " +
+        (
+            page === "store"
+                ? "SHOP"
+                : page
+                    .replace("-", " ")
+                    .toUpperCase()
+        );
+
+    pages[page]();
+
+    history.replaceState(
+        null,
+        "",
+        "/app?page=" + page
+    );
+};
+
+/* =========================================================
+   CUSTOMER SIGNUP AUTO OPEN
+========================================================= */
+
+const customerUpgradeInit = () => {
+    const signup =
+        new URLSearchParams(
+            location.search
+        ).get("auth") === "signup";
+
+    const authScreen =
+        document.querySelector(
+            "#auth-screen"
+        );
+
+    if (
+        authScreen &&
+        !authScreen.classList.contains(
+            "hidden"
+        ) &&
+        signup
+    ) {
+        window.setAuthMode(true);
+    }
+};
+
+setTimeout(
+    customerUpgradeInit,
+    0
+);
