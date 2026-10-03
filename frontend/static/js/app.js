@@ -553,7 +553,10 @@ async function dashboardPage() {
         ]);
 
         const recent = os.slice(0, 5);
-        const low = (inv || []).filter(x => x.stock <= x.reorder_level).slice(0, 5);
+        const inventoryRows = inv || [];
+        const low = inventoryRows.filter(x => x.stock > 0 && x.stock <= x.reorder_level).slice(0, 5);
+        const out = inventoryRows.filter(x => x.stock <= 0);
+        const alerts = [...out.map(x => ({...x, alert:'OUT OF STOCK'})), ...low.map(x => ({...x, alert:'LOW STOCK'}))];
 
         $('#page').innerHTML = `
             <div class="page-head">
@@ -565,6 +568,22 @@ async function dashboardPage() {
                 <button class="btn btn-primary" onclick="route('ai')">✦ Ask AURA</button>
             </div>
 
+            ${alerts.length ? `
+                <div class="card" style="margin-top:18px;border-left:4px solid var(--danger)">
+                    <div class="card-title">
+                        <h3>⚠ Inventory attention needed</h3>
+                        <button class="ghost" onclick="route('inventory')">Manage inventory</button>
+                    </div>
+                    <div style="display:grid;gap:8px">
+                        ${alerts.slice(0,8).map(x => `
+                            <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
+                                <span><b>${esc(x.product)}</b> · ${x.stock} left</span>
+                                <span class="status ${x.stock <= 0 ? 'out' : 'low'}">${x.alert}</span>
+                            </div>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
             <div class="grid grid-4">
                 <div class="card metric"><div class="metric-label">Total Orders</div><div class="metric-value">${d.orders}</div></div>
                 <div class="card metric"><div class="metric-label">Revenue</div><div class="metric-value">${money(d.revenue || 0)}</div></div>
@@ -612,7 +631,7 @@ async function dashboardPage() {
                                     <td><b>${esc(x.product)}</b></td>
                                     <td>${x.stock}</td>
                                     <td>${x.reorder_level}</td>
-                                    <td><span class="status low">Low Stock</span></td>
+                                    <td><span class="status ${x.stock <= 0 ? 'out' : 'low'}">${x.stock <= 0 ? 'Out of Stock' : 'Low Stock'}</span></td>
                                 </tr>
                             `).join('') || '<tr><td colspan="4">No low-stock products.</td></tr>'}
                         </tbody>
