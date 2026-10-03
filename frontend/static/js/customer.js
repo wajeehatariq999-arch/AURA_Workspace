@@ -1558,6 +1558,26 @@ window.renderShell = function () {
             My Orders
         </button>
 
+        <button
+            class="nav-item"
+            data-page="aura-help"
+        >
+            <span class="nav-icon">
+                ✦
+            </span>
+            Ask AURA
+        </button>
+
+        <button
+            class="nav-item"
+            data-page="feedback"
+        >
+            <span class="nav-icon">
+                ♡
+            </span>
+            Feedback
+        </button>
+
         <div class="nav-group">
             Account
         </div>
@@ -1607,6 +1627,12 @@ window.route = function (p) {
 
         orders:
             ordersPage,
+
+        "aura-help":
+            customerAuraHelpPage,
+
+        feedback:
+            customerFeedbackPage,
 
         profile:
             profilePage,
