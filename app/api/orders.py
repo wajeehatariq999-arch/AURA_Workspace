@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -20,20 +21,37 @@ router = APIRouter(
 )
 
 
+def _note_value(notes, label):
+    if not notes:
+        return None
+    prefix = label.lower() + ":"
+    for line in str(notes).splitlines():
+        if line.strip().lower().startswith(prefix):
+            return line.split(":", 1)[1].strip()
+    return None
+
+
 def serialize(o):
     customer = o.customer
+    phone = _note_value(o.notes, "Phone")
+    address = _note_value(o.notes, "Delivery address")
 
     return {
         "id": o.id,
         "status": o.status,
         "total_amount": float(o.total_amount),
         "notes": o.notes,
+        "phone": phone,
+        "address": address,
+        "expected_delivery_date": o.expected_delivery_date.isoformat() if o.expected_delivery_date else None,
         "created_at": o.created_at.isoformat(),
         "customer": (
             {
                 "id": customer.id,
                 "name": customer.full_name,
                 "email": customer.email,
+                "phone": phone,
+                "address": address,
             }
             if customer
             else None
@@ -233,6 +251,7 @@ def update_status(
         )
 
     order.status = payload.status
+    order.expected_delivery_date = payload.expected_delivery_date
 
     log_action(
         db,
@@ -242,6 +261,11 @@ def update_status(
         order.id,
         details={
             "status": order.status,
+            "expected_delivery_date": (
+                order.expected_delivery_date.isoformat()
+                if order.expected_delivery_date
+                else None
+            ),
         },
     )
 
