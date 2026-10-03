@@ -112,6 +112,12 @@ class OrderIn(BaseModel):
     notes: str | None = Field(default=None, max_length=1000)
 
 
+class FeedbackIn(BaseModel):
+    kind: str = Field(default="feedback", pattern="^(feedback|query)$")
+    rating: int | None = Field(default=None, ge=1, le=5)
+    subject: str | None = Field(default=None, max_length=200)
+    message: str = Field(min_length=2, max_length=4000)
+
 class AIChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=8000)
     conversation_id: int | None = None
