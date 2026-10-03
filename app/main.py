@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.database import Base, engine
-from app.api import auth, business, products, inventory, suppliers, orders, dashboard, ai, insights
+from app.api import auth, business, products, inventory, suppliers, orders, dashboard, ai, insights, feedback
 from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.models import ProductImage, Product, Business
@@ -18,7 +18,7 @@ app=FastAPI(title=settings.app_name,version="3.0.0",docs_url="/docs",redoc_url=N
 app.add_middleware(CORSMiddleware,allow_origins=settings.cors_origins,allow_credentials=True,allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"],allow_headers=["Content-Type","Authorization","X-CSRF-Token"],max_age=600)
 app.mount("/static",StaticFiles(directory=str(BASE/"frontend"/"static")),name="static")
 templates=Jinja2Templates(directory=str(BASE/"frontend"/"templates"))
-for r in [auth.router,business.router,products.router,inventory.router,suppliers.router,orders.router,dashboard.router,ai.router,insights.router]: app.include_router(r)
+for r in [auth.router,business.router,products.router,inventory.router,suppliers.router,orders.router,dashboard.router,ai.router,insights.router,feedback.router]: app.include_router(r)
 
 @app.get("/api/product-images/{storage_name}")
 def protected_product_image(storage_name: str, user=Depends(get_current_user), db=Depends(get_db)):
