@@ -3134,16 +3134,13 @@ async function aiPage() {
                 </h1>
 
                 <p>
-                    Ask naturally. AURA routes
-                    specialist agents, calls real
-                    tools, evaluates evidence and
-                    grounds the final result.
+                    Ask naturally. AURA routes specialist agents, uses live business data and your Knowledge Base, and returns an evidence-based answer.
                 </p>
 
             </div>
 
             <span class="status">
-                GROUNDED MODE
+                AI READY
             </span>
 
         </div>
@@ -3409,7 +3406,7 @@ function aiResult(r) {
             <div class="card-title">
 
                 <h3>
-                    Grounded result
+                    AURA result
                 </h3>
 
                 ${
@@ -3547,37 +3544,13 @@ function aiResult(r) {
                     : ''
             }
 
-            <details
+            <div
+                class="top-note"
                 style="margin-top:15px"
             >
+                AURA uses authorized business data and the owner's Knowledge Base to answer requests.
+            </div>
 
-                <summary class="small">
-                    Evidence & agent findings
-                </summary>
-
-                <pre
-                    style="
-                        white-space:pre-wrap;
-                        font-size:9px;
-                        max-height:300px;
-                        overflow:auto
-                    "
-                >${esc(
-                    JSON.stringify(
-                        {
-                            plan:
-                                r.plan,
-                            evaluation:
-                                r.evaluation,
-                            agents:
-                                r.agents
-                        },
-                        null,
-                        2
-                    )
-                )}</pre>
-
-            </details>
 
         </div>
     `;
