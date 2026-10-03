@@ -200,6 +200,7 @@ try:
             ("#6d7759", "#eee2c8"),
         ]
 
+
         for idx, (name, desc, price, cat, stock, reorder) in enumerate(products):
             p = Product(
                 business_id=b.id,
