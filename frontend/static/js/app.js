@@ -430,6 +430,14 @@ function renderShell() {
 
             <button
                 class="nav-item"
+                data-page="feedback"
+            >
+                <span class="nav-icon">♡</span>
+                Customer Feedback
+            </button>
+
+            <button
+                class="nav-item"
                 data-page="security"
             >
                 <span class="nav-icon">◉</span>
@@ -511,6 +519,7 @@ function route(p) {
         knowledge: knowledgePage,
         approvals: approvalsPage,
         security: securityPage,
+        feedback: feedbackPage,
         settings: settingsPage,
         profile: profilePage
     };
@@ -4489,6 +4498,61 @@ async function securityPage() {
     `;
 }
 
+
+
+async function feedbackPage() {
+    if (!['owner', 'admin', 'staff'].includes(me.role)) {
+        return unauthorized('Customer Feedback');
+    }
+    try {
+        const rows = await api('/api/feedback');
+        $('#page').innerHTML = `
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">CUSTOMER VOICE</div>
+                    <h1>Customer Feedback</h1>
+                    <p>Review customer questions and feedback submitted through AURA.</p>
+                </div>
+            </div>
+            <div class="grid grid-2">
+                ${rows.map(x => `
+                    <div class="card">
+                        <div class="card-title">
+                            <h3>${esc(x.subject || (x.kind === 'query' ? 'Customer Query' : 'Customer Feedback'))}</h3>
+                            <span class="status ${x.status === 'resolved' ? '' : 'low'}">${esc(x.status)}</span>
+                        </div>
+                        <div class="small muted" style="margin-bottom:10px">
+                            ${esc(x.customer || 'Customer')} · ${esc(x.customer_email || '')} · ${date(x.created_at)}
+                        </div>
+                        ${x.rating ? `<div style="margin-bottom:10px">Rating: <b>${x.rating}/5</b></div>` : ''}
+                        <p style="line-height:1.7">${esc(x.message)}</p>
+                        ${x.ai_answer ? `
+                            <div class="evidence">
+                                <strong>AURA answer</strong>
+                                <div class="answer-box" style="margin-top:7px">${esc(x.ai_answer)}</div>
+                            </div>` : ''}
+                        <div class="form-actions">
+                            <button class="ghost" onclick="updateFeedbackStatus(${x.id}, 'reviewed')">Mark reviewed</button>
+                            <button class="btn btn-primary" onclick="updateFeedbackStatus(${x.id}, 'resolved')">Resolve</button>
+                        </div>
+                    </div>
+                `).join('') || '<div class="empty" style="grid-column:1/-1">No customer feedback yet.</div>'}
+            </div>
+        `;
+    } catch (e) {
+        $('#page').innerHTML = `<div class="error">${esc(e.message)}</div>`;
+    }
+}
+
+async function updateFeedbackStatus(id, status) {
+    try {
+        await api(`/api/feedback/${id}?status=${encodeURIComponent(status)}`, {method:'PATCH'});
+        feedbackPage();
+        toast('Feedback updated');
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
 
 // ============================================================
 // SETTINGS
