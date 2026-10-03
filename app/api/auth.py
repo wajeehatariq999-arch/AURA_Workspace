@@ -1,9 +1,20 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Business, BusinessSettings, User
-from app.schemas.schemas import SignupIn, CustomerSignupIn, LoginIn, UserOut
+from app.models import (
+    Business,
+    BusinessSettings,
+    User,
+    ProductCategory,
+)
+from app.schemas.schemas import (
+    SignupIn,
+    CustomerSignupIn,
+    LoginIn,
+    UserOut,
+)
 from app.auth.security import (
     hash_password,
     verify_password,
@@ -14,7 +25,11 @@ from app.auth.dependencies import get_current_user
 from app.services.audit import log_action
 from app.config import settings
 
-router = APIRouter(prefix="/api/auth", tags=["authentication"])
+
+router = APIRouter(
+    prefix="/api/auth",
+    tags=["authentication"],
+)
 
 
 def set_auth_cookies(response: Response, token: str):
@@ -42,7 +57,9 @@ def set_auth_cookies(response: Response, token: str):
 
 
 @router.get("/businesses")
-def public_businesses(db: Session = Depends(get_db)):
+def public_businesses(
+    db: Session = Depends(get_db),
+):
     businesses = (
         db.query(Business)
         .order_by(Business.name.asc())
@@ -59,7 +76,10 @@ def public_businesses(db: Session = Depends(get_db)):
     ]
 
 
-@router.post("/signup", response_model=UserOut)
+@router.post(
+    "/signup",
+    response_model=UserOut,
+)
 def signup(
     payload: SignupIn,
     response: Response,
@@ -68,8 +88,13 @@ def signup(
 ):
     email = payload.email.lower()
 
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(409, "An account with this email already exists")
+    if db.query(User).filter(
+        User.email == email
+    ).first():
+        raise HTTPException(
+            409,
+            "An account with this email already exists",
+        )
 
     business = Business(
         name=payload.business_name.strip(),
@@ -79,11 +104,60 @@ def signup(
     db.add(business)
     db.flush()
 
+    # Default categories for every new business
+    default_categories = [
+        (
+            "Fashion & Clothing",
+            "Clothing, shirts, dresses and everyday fashion.",
+        ),
+        (
+            "Shoes & Footwear",
+            "Sneakers, shoes and everyday footwear.",
+        ),
+        (
+            "Jewellery & Accessories",
+            "Jewellery, watches and everyday accessories.",
+        ),
+        (
+            "Home & Living",
+            "Home decoration and lifestyle essentials.",
+        ),
+        (
+            "Bags",
+            "Handbags, shoulder bags and everyday bags.",
+        ),
+        (
+            "Beauty & Personal Care",
+            "Beauty and personal care products.",
+        ),
+        (
+            "Electronics & Gadgets",
+            "Electronics and modern gadgets.",
+        ),
+        (
+            "Gifts & Lifestyle",
+            "Gift sets and lifestyle products.",
+        ),
+    ]
+
+    for category_name, category_description in default_categories:
+        db.add(
+            ProductCategory(
+                business_id=business.id,
+                name=category_name,
+                description=category_description,
+            )
+        )
+
+    db.flush()
+
     user = User(
         business_id=business.id,
         full_name=payload.full_name.strip(),
         email=email,
-        password_hash=hash_password(payload.password),
+        password_hash=hash_password(
+            payload.password
+        ),
         role="owner",
     )
 
@@ -98,7 +172,11 @@ def signup(
         "signup",
         "user",
         user.id,
-        ip_address=request.client.host if request.client else None,
+        ip_address=(
+            request.client.host
+            if request.client
+            else None
+        ),
     )
 
     db.commit()
@@ -109,7 +187,10 @@ def signup(
     return user
 
 
-@router.post("/customer-signup", response_model=UserOut)
+@router.post(
+    "/customer-signup",
+    response_model=UserOut,
+)
 def customer_signup(
     payload: CustomerSignupIn,
     response: Response,
@@ -118,19 +199,32 @@ def customer_signup(
 ):
     email = payload.email.lower()
 
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(409, "An account with this email already exists")
+    if db.query(User).filter(
+        User.email == email
+    ).first():
+        raise HTTPException(
+            409,
+            "An account with this email already exists",
+        )
 
-    business = db.get(Business, payload.business_id)
+    business = db.get(
+        Business,
+        payload.business_id,
+    )
 
     if not business:
-        raise HTTPException(404, "Store not found")
+        raise HTTPException(
+            404,
+            "Store not found",
+        )
 
     user = User(
         business_id=business.id,
         full_name=payload.full_name.strip(),
         email=email,
-        password_hash=hash_password(payload.password),
+        password_hash=hash_password(
+            payload.password
+        ),
         role="customer",
     )
 
@@ -143,7 +237,11 @@ def customer_signup(
         "customer_signup",
         "user",
         user.id,
-        ip_address=request.client.host if request.client else None,
+        ip_address=(
+            request.client.host
+            if request.client
+            else None
+        ),
     )
 
     db.commit()
@@ -154,7 +252,10 @@ def customer_signup(
     return user
 
 
-@router.post("/signin", response_model=UserOut)
+@router.post(
+    "/signin",
+    response_model=UserOut,
+)
 def signin(
     payload: LoginIn,
     response: Response,
@@ -163,7 +264,9 @@ def signin(
 ):
     user = (
         db.query(User)
-        .filter(User.email == payload.email.lower())
+        .filter(
+            User.email == payload.email.lower()
+        )
         .first()
     )
 
@@ -171,10 +274,16 @@ def signin(
         payload.password,
         user.password_hash,
     ):
-        raise HTTPException(401, "Invalid email or password")
+        raise HTTPException(
+            401,
+            "Invalid email or password",
+        )
 
     if not user.is_active:
-        raise HTTPException(403, "This account is inactive")
+        raise HTTPException(
+            403,
+            "This account is inactive",
+        )
 
     log_action(
         db,
@@ -182,11 +291,19 @@ def signin(
         "signin",
         "user",
         user.id,
-        ip_address=request.client.host if request.client else None,
+        ip_address=(
+            request.client.host
+            if request.client
+            else None
+        ),
     )
+
     db.commit()
 
-    set_auth_cookies(response, create_access_token(user.id))
+    set_auth_cookies(
+        response,
+        create_access_token(user.id),
+    )
 
     return user
 
@@ -197,15 +314,36 @@ def signout(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    log_action(db, user, "signout", "user", user.id)
+    log_action(
+        db,
+        user,
+        "signout",
+        "user",
+        user.id,
+    )
+
     db.commit()
 
-    response.delete_cookie("auth_token", path="/")
-    response.delete_cookie("csrf_token", path="/")
+    response.delete_cookie(
+        "auth_token",
+        path="/",
+    )
 
-    return {"message": "Signed out successfully"}
+    response.delete_cookie(
+        "csrf_token",
+        path="/",
+    )
+
+    return {
+        "message": "Signed out successfully"
+    }
 
 
-@router.get("/me", response_model=UserOut)
-def me(user: User = Depends(get_current_user)):
+@router.get(
+    "/me",
+    response_model=UserOut,
+)
+def me(
+    user: User = Depends(get_current_user),
+):
     return user

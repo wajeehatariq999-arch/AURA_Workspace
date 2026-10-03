@@ -105,9 +105,7 @@ class OrderItemIn(BaseModel):
 
 class OrderIn(BaseModel):
     items: list[OrderItemIn] = Field(min_length=1)
-    phone: str | None = Field(default=None, min_length=7, max_length=50)
-    address: str | None = Field(default=None, min_length=5, max_length=500)
-    notes: str | None = Field(default=None, max_length=1000)
+    notes: str | None = None
 
 
 class AIChatIn(BaseModel):
