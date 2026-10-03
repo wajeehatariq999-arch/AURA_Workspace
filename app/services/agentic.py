@@ -15,7 +15,7 @@ AGENTS = {
         "tools":["get_product","get_order_status","get_business_policy","search_business_knowledge"]},
     "order": {
         "mission":"Handle real order questions, totals and order creation using current product/stock/order data.",
-        "tools":["get_product","get_order_status","calculate_order_total","create_order","get_business_policy"]},
+        "tools":["get_product","get_order_status","list_orders","calculate_order_total","create_order","get_business_policy"]},
     "inventory": {
         "mission":"Inspect current stock and reorder levels and reason about restocking needs.",
         "tools":["check_inventory","get_product","generate_business_report"]},
@@ -24,7 +24,7 @@ AGENTS = {
         "tools":["get_supplier","check_inventory","get_product","prepare_supplier_request"]},
     "analytics": {
         "mission":"Analyze actual business data and produce evidence-based operational insights.",
-        "tools":["generate_business_report","check_inventory","get_product","get_order_status"]},
+        "tools":["generate_business_report","check_inventory","get_product","get_order_status","list_orders"]},
 }
 
 ROLE_AGENTS={
