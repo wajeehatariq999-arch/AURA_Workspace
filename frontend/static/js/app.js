@@ -4019,14 +4019,34 @@ function knowledgeUpload() {
         async e => {
             e.preventDefault();
 
-            const fd =
-                new FormData();
+            const input = $('#knowledge-file');
+            const button = $('#knowledge-form button');
+            const file = input?.files?.[0];
 
-            fd.append(
-                'file',
-                $('#knowledge-file')
-                    .files[0]
-            );
+            if (!file) {
+                toast(
+                    'Please choose a document first.',
+                    'error'
+                );
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('file', file);
+
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Uploading & indexing…';
+                button.style.opacity = '0.65';
+                button.style.cursor = 'wait';
+            }
+
+            const status = document.createElement('p');
+            status.className = 'muted small';
+            status.style.marginTop = '10px';
+            status.textContent =
+                'AURA is uploading the document and building its searchable knowledge index. The first upload can take a little longer while the AI embedding model loads.';
+            $('#knowledge-form').appendChild(status);
 
             try {
                 const d =
@@ -4041,11 +4061,25 @@ function knowledgeUpload() {
                     `Indexed ${d.chunks} chunks`
                 );
 
-                knowledgePage();
+                await knowledgePage();
 
             } catch (err) {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = 'Upload & index';
+                    button.style.opacity = '';
+                    button.style.cursor = '';
+                }
+
+                if (status) {
+                    status.textContent =
+                        'Upload failed: ' +
+                        (err.message || 'Please try again.');
+                    status.classList.add('error');
+                }
+
                 toast(
-                    err.message,
+                    err.message || 'Upload failed. Please try again.',
                     'error'
                 );
             }
