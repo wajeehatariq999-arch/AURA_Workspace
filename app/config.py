@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     demo_admin_password: str = "ChangeMe-123!"
     groq_api_key: str | None = None
     groq_model: str = "openai/gpt-oss-120b"
+
+    @property
+    def effective_groq_model(self) -> str:
+        # Keep older local .env files from forcing the removed Groq model.
+        if self.groq_model == "llama-3.3-70b-versatile":
+            return "openai/gpt-oss-120b"
+        return self.groq_model
     groq_timeout_seconds: int = 60
     rag_collection_prefix: str = "aura_business"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
