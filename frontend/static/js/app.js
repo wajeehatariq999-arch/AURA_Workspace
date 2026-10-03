@@ -2111,7 +2111,7 @@ async function ordersPage() {
                             const statusLabel = {
                                 pending: 'Order Placed',
                                 confirmed: 'Confirmed',
-                                processing: 'Processing',
+                                processing: 'Out for Delivery',
                                 shipped: 'Shipped',
                                 completed: 'Delivered',
                                 cancelled: 'Cancelled'
@@ -2167,7 +2167,7 @@ async function ordersPage() {
                                     </div>
 
                                     ${
-                                        !isCustomer && o.user
+                                        !isCustomer && o.customer
                                             ? `
                                             <div
                                                 style="
@@ -2183,8 +2183,7 @@ async function ordersPage() {
 
                                                 <strong>
                                                     ${esc(
-                                                        o.user.full_name ||
-                                                        o.customer_name ||
+                                                        o.customer.full_name ||
                                                         'Customer'
                                                     )}
                                                 </strong>
@@ -2207,6 +2206,31 @@ async function ordersPage() {
                                             `
                                             : ''
                                     }
+
+                                    ${isCustomer ? `
+                                        <div style="margin:16px 0;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                            ${[
+                                                ['pending','Order Placed'],
+                                                ['confirmed','Confirmed'],
+                                                ['shipped','Shipped'],
+                                                ['processing','Out for Delivery'],
+                                                ['completed','Delivered']
+                                            ].map(([key,label],idx) => `
+                                                <span style="padding:7px 10px;border-radius:999px;background:${['pending','confirmed','shipped','processing','completed'].indexOf(o.status)>=idx ? '#e8f0ea' : '#f1eee8'};font-size:12px;">
+                                                    ${label}
+                                                </span>
+                                                ${idx < 4 ? '<span class="muted">→</span>' : ''}
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+
+                                    ${!isCustomer && o.customer ? `
+                                        <div class="small" style="margin:10px 0 16px;padding:10px 12px;background:#f8f5ef;border-radius:10px;">
+                                            <b>Phone:</b> ${esc(o.phone || 'Not provided')}
+                                            <br>
+                                            <b>Address:</b> ${esc(o.address || 'Not provided')}
+                                        </div>
+                                    ` : ''}
 
                                     <div class="small muted">
                                         PRODUCTS
