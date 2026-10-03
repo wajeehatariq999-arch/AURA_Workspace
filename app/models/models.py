@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, CheckConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -120,6 +120,7 @@ class Order(Base):
     status: Mapped[str] = mapped_column(String(30), default="pending", nullable=False)
     total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text)
+    expected_delivery_date: Mapped[datetime.date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now, nullable=False)
     business = relationship("Business", back_populates="orders")
