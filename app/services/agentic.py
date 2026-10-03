@@ -89,6 +89,33 @@ def _agent_turn(db,user,run,name,question,objective,context,history,memory):
     tool_text=json.dumps(tool_descriptions(spec["tools"]))
     system=f'''You are the {name.replace('_',' ').title()} Agent inside AURA. Mission: {spec["mission"]}\nUse tools for factual business information. You may not invent prices, stock, policies, orders, suppliers or document content. If information is missing, say so. For customer questions about policies, returns, delivery, business rules, FAQs or other owner-provided information, use search_business_knowledge and base the answer on retrieved business documents. For inventory questions, always inspect current stock; explicitly flag every low-stock item and every out-of-stock item as an operational warning. For product questions, include real product descriptions when available. You are allowed to communicate findings to the manager, not directly execute unapproved high-impact actions.\nAvailable tools: {tool_text}\nFor every tool call, output JSON only: {{"type":"tool","name":"TOOL_NAME","arguments":{{...}}}}. After enough evidence, output JSON only: {{"type":"final","answer":"...","evidence":[...],"proposed_action":null or {{...}}}}. Never claim a tool was called unless its result is supplied.''' 
     evidence=[]
+
+    # Knowledge questions must always consult the owner's indexed documents.
+    # Do this deterministically instead of relying on the LLM to remember to
+    # call the RAG tool. This makes policy/FAQ answers reliably grounded in
+    # the business Knowledge Base.
+    knowledge_request = name == "customer_support"
+    if knowledge_request:
+        rag_result = execute_tool(
+            ToolContext(db,user),
+            "search_business_knowledge",
+            {"query": question, "top_k": 5}
+        )
+        _record_event(
+            db,
+            user,
+            run,
+            name,
+            "tool_call",
+            "search_business_knowledge",
+            {"arguments": {"query": question, "top_k": 5}, "result": rag_result}
+        )
+        db.flush()
+        evidence.append({
+            "tool": "search_business_knowledge",
+            "result": rag_result
+        })
+
     for _ in range(5):
         user_prompt={"question":question,"objective":objective,"context":context,"memory":memory,"other_agent_findings":evidence,"conversation":history}
         raw=_complete([{"role":"system","content":system},{"role":"user","content":json.dumps(user_prompt,default=str)}])
