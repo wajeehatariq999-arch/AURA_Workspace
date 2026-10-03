@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     demo_admin_email: str = "owner@aurademo.local"
     demo_admin_password: str = "ChangeMe-123!"
     groq_api_key: str | None = None
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     groq_timeout_seconds: int = 60
     rag_collection_prefix: str = "aura_business"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
