@@ -13,7 +13,6 @@ data/*.sqlite
 data/*.sqlite3
 data/uploads/*
 !data/uploads/.gitkeep
-data/product_images/*
 !data/product_images/.gitkeep
 data/documents/*
 !data/documents/.gitkeep
@@ -28,3 +27,17 @@ data/documents/*
 !data/documents/.gitkeep
 data/vector_store/*
 !data/vector_store/.gitkeep
+data/product_images/*.svg
+
+# AURA runtime database
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Runtime uploads
+data/uploads/
+data/documents/
+
+# Keep product images
+!data/product_images/
+!data/product_images/*

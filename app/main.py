@@ -12,6 +12,7 @@ from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.models import ProductImage, Product, Business, BusinessSettings, User, ProductCategory, Inventory
 from app.auth.security import hash_password
+from app.deployment_seed import ensure_catalog
 
 BASE=Path(__file__).resolve().parent.parent
 for path in [BASE/"data"/"uploads",BASE/"data"/"product_images",BASE/"data"/"documents",BASE/"data"/"vector_store"]: path.mkdir(parents=True,exist_ok=True)
@@ -96,6 +97,7 @@ def ensure_fixed_owner():
         db.close()
 
 ensure_fixed_owner()
+ensure_catalog()
 app=FastAPI(title=settings.app_name,version="3.0.0",docs_url="/docs",redoc_url=None)
 app.add_middleware(CORSMiddleware,allow_origins=settings.cors_origins,allow_credentials=True,allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"],allow_headers=["Content-Type","Authorization","X-CSRF-Token"],max_age=600)
 app.mount("/static",StaticFiles(directory=str(BASE/"frontend"/"static")),name="static")
