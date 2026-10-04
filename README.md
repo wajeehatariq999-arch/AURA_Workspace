@@ -1,983 +1,518 @@
-✨ AURA Marketplace
+<div align="center">
+
+# ✨ AURA Marketplace
+
+### AI-Powered Marketplace & Business Management Platform
+
+**Shop simply. Manage intelligently. Ask AURA.**
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit-success?style=for-the-badge&logo=fastapi)](https://aura-workspace.fastapicloud.dev)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/wajeehatariq999-arch/AURA_Workspace)
+
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-RAG-orange)
+![Groq](https://img.shields.io/badge/Groq-LLM-F55036)
+
+[Live Demo](https://aura-workspace.fastapicloud.dev) • [Features](#-features) • [Architecture](#-system-architecture) • [Quick Start](#-quick-start) • [Demo Guide](#-demo-walkthrough)
+
+</div>
+
+---
+
+## 📑 Table of Contents
+
+- [Overview](#-overview)
+- [Key Highlights](#-key-highlights)
+- [Features](#-features)
+- [How RAG Works](#-how-rag-works)
+- [AI Scope & Behavior](#-ai-scope--behavior)
+- [Approval Center (Human-in-the-Loop)](#-approval-center-human-in-the-loop)
+- [Security & Privacy](#-security--privacy)
+- [System Architecture](#-system-architecture)
+- [Technology Stack](#-technology-stack)
+- [Data Model](#-data-model)
+- [Project Structure](#-project-structure)
+- [Quick Start](#-quick-start)
+- [Demo Walkthrough](#-demo-walkthrough)
+- [Roadmap](#-roadmap)
+- [Author](#-author)
 
-🛍️ AI-Powered Marketplace & Business Management Platform
+---
 
-Shop simply. Manage intelligently. Ask AURA.
+## 🌟 Overview
 
-AURA Marketplace is a full-stack web application that combines a customer shopping experience with business management and focused AI assistance.
+**AURA Marketplace** is a full-stack web application that unites a customer shopping experience with business management and focused AI assistance in a single platform.
 
-🌐 Live Demo: https://aura-workspace.fastapicloud.dev
-💻 GitHub: https://github.com/wajeehatariq999-arch/AURA_Workspace
+| Role | What they can do |
+|------|------------------|
+| 👔 **Business Owner** | Manage products, inventory, orders, suppliers, analytics, documents and AI-assisted operations |
+| 🛍️ **Customer** | Create an account, browse products, place orders, track their own orders and ask AURA questions |
+| 🤖 **AURA AI** | Gives short, focused answers using authorized business data and owner-uploaded knowledge |
 
-🌟 What is AURA Marketplace?
+> **The core idea:** AURA is not just an online store, and it is not just a chatbot.
+> It combines **E-Commerce + Business Operations + AI + RAG + Security + Human Approval** in one connected system.
 
-AURA Marketplace brings two sides of a business into one platform:
+```mermaid
+flowchart TD
+    A([✨ AURA Marketplace]) --> B[👔 Business Owner]
+    A --> C[🛍️ Customer]
+    B --> B1[Products]
+    B --> B2[Orders]
+    B --> B3[Inventory]
+    B --> B4[Knowledge Base]
+    C --> C1[Browse]
+    C --> C2[Orders]
+    C --> C3[Ask AURA]
+    B4 --> D{{🤖 AURA AI}}
+    C3 --> D
+    D --> E[Short & Relevant Answers]
+```
 
-👔 Business Owner — manages products, inventory, orders, suppliers, analytics, documents and AI-assisted operations.
+---
 
-🛍️ Customer — creates an account, browses products, places orders and asks AURA about marketplace-related information.
+## 🎯 Key Highlights
 
-🤖 AURA AI — gives short, focused answers using authorized business data and owner-uploaded knowledge.
+| | Highlight | Description |
+|---|-----------|-------------|
+| 🛍️ | **Complete Marketplace** | Customers browse products and place orders |
+| 👔 | **Business Management** | Owners manage products, inventory, orders and suppliers |
+| 🤖 | **Focused AI** | AURA answers only marketplace and business-related questions |
+| 📚 | **Owner Knowledge** | Upload PDF / DOCX / TXT files and use them as AI knowledge |
+| 🧠 | **RAG** | Relevant information is retrieved from owner documents, not invented |
+| 🔐 | **Role-Based Security** | Owner, Admin, Staff and Customer have different permissions |
+| 🛡️ | **Customer Privacy** | Customers can only access their own data |
+| ✅ | **Human Approval** | Important AI actions require owner/admin approval |
+| 📊 | **Business Insights** | Analytics for orders, revenue and inventory |
+| 🌐 | **Real Deployment** | Live FastAPI application on FastAPI Cloud |
 
-💡 Main idea
+---
 
-AURA is not just an online store and it is not just a chatbot.
+## 🚀 Features
 
-It combines:
+### 👔 Business Owner
 
-🛍️ E-Commerce + 👔 Business Operations + 🤖 AI + 📚 RAG + 🔐 Security + ✅ Human Approval
+<details open>
+<summary><b>🏠 Dashboard</b></summary>
 
-🗺️ AURA AT A GLANCE
+A quick overview of what needs attention:
 
-                         ✨ AURA MARKETPLACE ✨
-                                  │
-                 ┌────────────────┴────────────────┐
-                 │                                 │
-                 ▼                                 ▼
-          👔 BUSINESS OWNER                   🛍️ CUSTOMER
-                 │                                 │
-       ┌─────────┼─────────┐             ┌────────┼────────┐
-       │         │         │             │        │        │
-    Products   Orders   Inventory      Browse   Orders   Ask AURA
-       │         │         │             │        │        │
-       └─────────┼─────────┘             └────────┼────────┘
-                 │                                 │
-                 ▼                                 ▼
-          📚 KNOWLEDGE BASE                 🧾 CUSTOMER DATA
-                 │
-                 ▼
-              🤖 AURA AI
-                 │
-                 ▼
-        Short + Relevant Answers
+- 📦 Total orders
+- 💰 Revenue
+- 🛍️ Total products
+- ⚠️ Low-stock products
+- 🧾 Recent orders
+- 📊 Business activity
 
-👔 01 — BUSINESS OWNER
+</details>
 
-The Business Owner has access to the complete business management side of AURA Marketplace.
+<details>
+<summary><b>🛍️ Product Management</b></summary>
 
-🏠 Business Dashboard
+- ➕ Add and ✏️ edit products
+- 🗂️ Manage categories
+- 💰 Set prices
+- 📦 Manage stock
+- 🖼️ Add product images
+- 🛒 Changes are instantly reflected in the customer-facing catalog
 
-The dashboard gives the owner a quick overview of:
+</details>
 
-📦 Total orders
+<details>
+<summary><b>📦 Inventory Management</b></summary>
 
-💰 Revenue
+Monitor stock levels and let AURA answer questions like *"Which products need restocking?"* from live inventory data.
 
-🛍️ Total products
+</details>
 
-⚠️ Low-stock products
+<details>
+<summary><b>🧾 Order Management</b></summary>
 
-🧾 Recent orders
+- View customer orders and check order status
+- Review order details
+- Monitor recent order activity
+- Ask AURA: *"What is the current order situation?"*
 
-📊 Business activity
+</details>
 
-The owner can immediately see what needs attention.
+<details>
+<summary><b>🚚 Supplier Management</b></summary>
 
-🛍️ Product Management
+Store supplier name, contact person, email, phone and address to support inventory and business workflows.
 
-The owner can:
+</details>
 
-➕ Add products
+<details>
+<summary><b>📊 Analytics</b></summary>
 
-✏️ Edit products
+Review orders, revenue, product activity, inventory conditions and business trends.
 
-🗂️ Manage categories
+</details>
 
-💰 Set prices
+<details>
+<summary><b>📚 Knowledge Base</b></summary>
 
-📦 Manage stock
+Upload business documents that AURA uses to answer relevant questions.
 
-🖼️ Add product images
+**Supported formats:** `PDF` · `DOCX` · `TXT`
 
-🛒 Maintain the customer-facing catalog
+**Example documents:** Return policy, refund policy, delivery policy, product information, store FAQs, business procedures.
 
-Changes made to products are reflected in the marketplace.
+</details>
 
-📦 Inventory Management
+### 🛍️ Customer
 
-AURA helps the owner monitor stock.
+- 👤 **Self-service accounts** — sign up and sign in without owner involvement
+- 🛍️ **Browse** products with images and prices
+- 📦 **Place orders** and 🧾 **view their own orders**
+- 🤖 **Ask AURA** about products, prices, availability, order status and store policies
 
-Example:
+**Supported product categories (examples):** 👕 Clothes · 👟 Shoes · 💍 Jewellery · 👜 Bags · 🧴 Body Care · 🏠 Home Products · 🎧 Electronics · 🎁 Gifts
 
-Which products need restocking?
+### 📚 Owner Files → Customer Answers
 
-AURA checks the available inventory information and provides a focused answer.
+One of AURA's signature features:
 
-🧾 Order Management
+```
+👔 Owner uploads "Return Policy.pdf"
+              │
+              ▼
+🛍️ Customer asks: "What is your return policy?"
+              │
+              ▼
+🤖 AURA retrieves the relevant section and replies with a short, grounded answer
+```
 
-The owner can:
+This keeps the AI useful for real business information instead of inventing answers.
 
-View customer orders
+---
 
-Check order status
+## 🧠 How RAG Works
 
-Review order details
+AURA uses **Retrieval-Augmented Generation (RAG)** so answers come from the owner's own documents.
 
-Monitor recent orders
+```mermaid
+flowchart TD
+    A[📄 Owner uploads PDF / DOCX / TXT] --> B[Text Extraction & Processing]
+    B --> C[Split into searchable chunks]
+    C --> D[🧠 Sentence Transformers<br/>create embeddings]
+    D --> E[(🔎 ChromaDB<br/>vector store)]
+    F[🛍️ User asks a question] --> G[Embed the question]
+    G --> H[Semantic search]
+    E --> H
+    H --> I[Relevant chunks retrieved]
+    I --> J[🤖 Groq LLM]
+    J --> K[💬 Short, relevant answer]
+```
 
-Understand order activity
+> AURA retrieves only the information relevant to the question instead of blindly using everything.
 
-Example:
+---
 
-What is the current order situation?
+## 🎯 AI Scope & Behavior
 
-AURA can use the business order data to answer.
+AURA is **not** a general-purpose chatbot. It focuses on the marketplace and the business.
 
-🚚 Supplier Management
+| ✅ In scope | 🚫 Out of scope |
+|------------|----------------|
+| Products, prices, availability | General knowledge questions |
+| Orders and order status | Unrelated topics |
+| Inventory and suppliers | |
+| Store policies | |
+| Owner-uploaded documents | |
+| Business information | |
 
-The owner can manage:
+For out-of-scope questions (applies to both owners and customers), AURA replies politely:
 
-🏢 Supplier name
+> *"Sorry, this question is not related to AURA Marketplace. I can help with products, orders, store policies and other marketplace-related information."*
 
-👤 Contact person
+### 💬 Suggested Questions
 
-📧 Email
+Clickable suggestions appear above the AI input (e.g. *"Which products need restocking?"*, *"Show low-stock products."*).
+Clicking one fills the input box so the user can review or edit it before sending — making AURA easy to use for non-technical users.
 
-📞 Phone
+---
 
-📍 Address
+## ✅ Approval Center (Human-in-the-Loop)
 
-Supplier information can support inventory and other business workflows.
+Important AI-prepared actions require review by the owner or admin before they are executed.
 
-📊 Analytics
+```mermaid
+flowchart LR
+    A[🤖 AI prepares action] --> B[⏳ Pending]
+    B --> C{👔 Owner / Admin review}
+    C -->|Approve| D[✅ Action completed]
+    C -->|Reject| E[❌ Rejected]
+    D --> F[📝 Audit record]
+    E --> F
+```
 
-The owner can review:
+📝 **Agent Activity** gives the owner visibility into AI runs, agent actions, approval decisions and important business events.
 
-Orders
+---
 
-Revenue
+## 🔐 Security & Privacy
 
-Product activity
+### Authentication
+- Password hashing
+- JWT-based authentication
+- **HttpOnly** authentication cookies
+- **CSRF** protection
 
-Inventory conditions
+### Role-Based Authorization
 
-Business trends
+| Role | Level |
+|------|-------|
+| 👑 Owner | Full business access |
+| 🛠️ Admin | Administrative access |
+| 👩‍💼 Staff | Limited operational access |
+| 🛍️ Customer | Own data only |
 
-This helps the owner understand the current state of the business.
+### Customer Privacy
 
-📚 OWNER KNOWLEDGE BASE
+| ✅ Allowed | ❌ Not allowed |
+|-----------|---------------|
+| Own orders | Another customer's orders |
+| Own order status | Another customer's private data |
+| Own customer information | Owner-only analytics and business data |
 
-The owner can upload business information that AURA can use when answering relevant questions.
+> Authorization is enforced on the **backend**, not just hidden in the frontend.
 
-Supported files
+### Data Protection & Audit
+- Customer orders are protected
+- Business data is isolated per business
+- Owner documents are protected
+- Important activity is recorded in audit logs for traceability
 
-📄 PDF
+---
 
-📝 DOCX
+## 🏗️ System Architecture
 
-📃 TXT
+```mermaid
+flowchart TD
+    FE[🎨 Frontend<br/>HTML + CSS + JavaScript] --> API[⚡ FastAPI Backend]
+    API --> AUTH[🔐 Auth]
+    API --> BIZ[🛍️ Business Logic]
+    API --> AI[🤖 AI / RAG Services]
+    BIZ --> DB[(🗃️ SQLite + SQLAlchemy)]
+    AUTH --> DB
+    AI --> VS[(🔎 ChromaDB)]
+    AI --> LLM[🧠 Groq LLM]
+    AI --> EMB[Sentence Transformers]
+```
 
-Example documents
+---
 
-Return policy
+## 🧰 Technology Stack
 
-Refund policy
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Backend | 🐍 **Python**, ⚡ **FastAPI** | REST API and web backend |
+| Frontend | 🎨 **HTML / CSS / JavaScript** | User interface |
+| Database | 🗃️ **SQLite**, 🔗 **SQLAlchemy** | Storage and ORM |
+| AI | 🤖 **Groq** | AI responses |
+| Embeddings | 🧠 **Sentence Transformers** | Text embeddings |
+| Vector Search | 🔎 **ChromaDB** | Semantic retrieval (RAG) |
+| Documents | 📄 **PDF / DOCX / TXT** | Business knowledge |
+| Auth | 🔐 **JWT / Cookies** | Authentication |
+| Protection | 🛡️ **CSRF** | Request protection |
+| Deployment | ☁️ **FastAPI Cloud** | Hosting |
 
-Delivery policy
+---
 
-Product information
+## 🗄️ Data Model
 
-Store FAQs
+| Area | Purpose |
+|------|---------|
+| 👤 Users | Authentication and roles |
+| 🏢 Businesses | Business ownership and isolation |
+| 🗂️ Categories | Product organization |
+| 🛍️ Products | Marketplace catalog |
+| 📦 Inventory | Stock management |
+| 🧾 Orders | Customer purchases |
+| 🚚 Suppliers | Supplier management |
+| 📚 Documents | Owner knowledge |
+| 🔎 Vector Store | RAG / semantic retrieval |
+| ✅ Approvals | Human approval workflow |
+| 🤖 Agent Activity | AI activity tracking |
+| 📝 Audit Logs | Traceability and security |
 
-Business procedures
+---
 
-The uploaded information becomes searchable business knowledge.
+## 📁 Project Structure
 
-🤖 AURA AI FOR THE OWNER
-
-The owner can ask AURA questions related to the business.
-
-Example questions
-
-📦 Which products are low in stock?
-
-🧾 What is the current order situation?
-
-📊 Which products need attention?
-
-📚 What does the uploaded return policy say?
-
-AURA is designed to give simple, short and relevant answers.
-
-🛍️ 02 — CUSTOMER
-
-The customer side provides the shopping experience.
-
-Customers can:
-
-👤 Create an account
-
-🔐 Sign in
-
-🛍️ Browse products
-
-🖼️ View product images
-
-💰 View prices
-
-📦 Place orders
-
-🧾 View their own orders
-
-🤖 Ask AURA
-
-👤 Customer Account
-
-Customers can create their own accounts.
-
-They do not need the owner to create an account for them.
-
-After signing in, customers can use the marketplace and access their own order information.
-
-🛒 Shopping Experience
-
-The marketplace can contain products such as:
-
-👕 Clothes
-
-👟 Shoes
-
-💍 Jewellery
-
-👜 Bags
-
-🧴 Body Care
-
-🏠 Home Products
-
-🎧 Electronics
-
-🎁 Gift Products
-
-📦 Customer Orders
-
-Customers can place orders and view their own order information.
-
-Example:
-
-What is my latest order?
-
-What is the status of my order?
-
-AURA can answer using information that belongs to the logged-in customer.
-
-📚 OWNER FILES → CUSTOMER ANSWERS
-
-This is one of the important features of AURA Marketplace.
-
-The owner uploads a business document.
-
-A customer later asks a related question.
-
-AURA retrieves the relevant information and gives a simple answer.
-
-Example
-
-👔 Owner uploads:
-
-Return Policy.pdf
-
-🛍️ Customer asks:
-
-What is your return policy?
-
-🤖 AURA:
-
-Gives a short answer based on the relevant information from the owner's uploaded document.
-
-This makes the AI useful for real business information instead of inventing answers.
-
-🧠 RAG — HOW OWNER FILES BECOME AI KNOWLEDGE
-
-AURA uses Retrieval-Augmented Generation (RAG).
-
-📄 Owner uploads PDF / DOCX / TXT
-                 │
-                 ▼
-          Text Processing
-                 │
-                 ▼
-       Text is divided into
-        searchable sections
-                 │
-                 ▼
-     🧠 Sentence Transformers
-            create embeddings
-                 │
-                 ▼
-             🔎 ChromaDB
-          stores vector data
-                 │
-                 ▼
-          🛍️ Customer asks
-            a question
-                 │
-                 ▼
-       Relevant information
-             is retrieved
-                 │
-                 ▼
-             🤖 Groq AI
-                 │
-                 ▼
-       💬 Simple, relevant answer
-
-The important idea is:
-
-AURA retrieves the information relevant to the question instead of blindly using everything.
-
-🎯 AURA AI — FOCUSED QUESTIONS
-
-AURA is not intended to be a general-purpose chatbot.
-
-It focuses on the marketplace and business.
-
-✅ Questions AURA can handle
-
-🛍️ Products
-
-💰 Product prices
-
-📦 Product availability
-
-🧾 Orders
-
-📊 Inventory
-
-🚚 Suppliers
-
-📚 Store policies
-
-📄 Owner-uploaded documents
-
-💼 Business information
-
-🚫 Unrelated Questions
-
-If someone asks something outside AURA Marketplace, AURA should politely explain its scope.
-
-Example:
-
-Sorry, this question is not related to AURA Marketplace. I can help with products, orders, store policies and other marketplace-related information.
-
-This rule applies to:
-
-👔 Business Owner
-
-🛍️ Customer
-
-💬 AI SUGGESTION BUTTONS
-
-AURA can show suggested questions above the AI input.
-
-For example:
-
-Which products need restocking?
-
-What is today's order situation?
-
-Show low-stock products.
-
-When the user clicks a suggestion:
-
-💡 Suggested Question
-        │
-        ▼
-📝 Added to AI input box
-        │
-        ▼
-👤 User can review/edit it
-        │
-        ▼
-🤖 Ask AURA
-        │
-        ▼
-💬 Relevant answer
-
-This makes the AI easier to use, especially for non-technical users.
-
-🔐 CUSTOMER PRIVACY
-
-A customer can access their own information.
-
-✅ Allowed
-
-Their own orders
-
-Their own order status
-
-Their own customer information
-
-❌ Not allowed
-
-Another customer's orders
-
-Another customer's private information
-
-Owner-only analytics
-
-Owner-only business data
-
-The backend applies authorization rather than relying only on frontend visibility.
-
-🧩 AI BUSINESS AREAS
-
-AURA can work with different business areas:
-
-                  🤖 AURA AI
-                       │
-       ┌───────────────┼───────────────┐
-       │               │               │
-       ▼               ▼               ▼
-   🛍️ Products      📦 Orders       📊 Inventory
-       │               │               │
-       └───────────────┼───────────────┘
-                       │
-              ┌────────┴────────┐
-              ▼                 ▼
-        🚚 Suppliers       📚 Knowledge
-
-The goal is to use the most relevant information for the user's question.
-
-✅ APPROVAL CENTER
-
-AURA supports human-in-the-loop business operations.
-
-Important actions can require owner/admin approval.
-
-🤖 AI prepares an action
-          │
-          ▼
-      ⏳ Pending
-          │
-          ▼
-👔 Owner / Admin reviews
-       │       │
-       ▼       ▼
-   ✅ Approve  ❌ Reject
-       │
-       ▼
-  Action completed
-       │
-       ▼
-   📝 Audit record
-
-The owner remains in control.
-
-📝 AGENT ACTIVITY
-
-The owner can review AI-related activity and important system events.
-
-This helps make the AI workflow more transparent.
-
-Examples include:
-
-🤖 AI runs
-
-🔧 Agent activity
-
-✅ Approval actions
-
-📝 Important business events
-
-🔐 SECURITY & AUDIT
-
-AURA includes multiple security layers.
-
-🔑 Authentication
-
-Password hashing
-
-Secure authentication
-
-HttpOnly authentication cookies
-
-CSRF protection
-
-🛡️ Role-Based Authorization
-
-Different users have different permissions:
-
-👑 Owner
-
-🛠️ Admin
-
-👩‍💼 Staff
-
-🛍️ Customer
-
-🔒 Data Protection
-
-Customer orders are protected
-
-Business data is isolated
-
-Owner documents are protected
-
-Unauthorized users cannot access restricted information
-
-📝 Audit
-
-Important business activity can be recorded for traceability.
-
-🏗️ SYSTEM ARCHITECTURE
-
-┌───────────────────────────────────────────────┐
-│              ✨ AURA MARKETPLACE ✨            │
-├───────────────────────────────────────────────┤
-│                                               │
-│   🎨 FRONTEND                                 │
-│   HTML + CSS + JavaScript                     │
-│                    │                          │
-│                    ▼                          │
-│   ⚡ FASTAPI BACKEND                          │
-│                    │                          │
-│        ┌───────────┼───────────┐              │
-│        ▼           ▼           ▼              │
-│    🔐 Auth     🛍️ Business   🤖 AI/RAG       │
-│        │           │           │              │
-│        │           ▼           ▼              │
-│        │       🗃️ SQLite    🔎 ChromaDB       │
-│        │       + SQLAlchemy      │             │
-│        │                         ▼             │
-│        │                      🧠 Groq          │
-│        │                                       │
-└────────┴───────────────────────────────────────┘
-
-🗄️ MAIN DATA AREAS
-
-Area
-
-Purpose
-
-👤 Users
-
-Authentication and roles
-
-🏢 Businesses
-
-Business ownership and isolation
-
-🗂️ Categories
-
-Product organization
-
-🛍️ Products
-
-Marketplace catalog
-
-📦 Inventory
-
-Stock management
-
-🧾 Orders
-
-Customer purchases
-
-🚚 Suppliers
-
-Supplier management
-
-📚 Documents
-
-Owner knowledge
-
-🔎 Vector Store
-
-RAG / semantic retrieval
-
-✅ Approvals
-
-Human approval workflow
-
-🤖 Agent Activity
-
-AI activity tracking
-
-📝 Audit Logs
-
-Traceability and security
-
-🧰 TECHNOLOGY STACK
-
-Technology
-
-Purpose
-
-🐍 Python
-
-Backend development
-
-⚡ FastAPI
-
-REST API and web backend
-
-🎨 HTML / CSS / JavaScript
-
-Frontend
-
-🗃️ SQLite
-
-Database
-
-🔗 SQLAlchemy
-
-Database ORM
-
-🤖 Groq
-
-AI responses
-
-🧠 Sentence Transformers
-
-Embeddings
-
-🔎 ChromaDB
-
-Vector search / RAG
-
-📄 PDF / DOCX / TXT
-
-Business knowledge
-
-🔐 JWT / Cookies
-
-Authentication
-
-🛡️ CSRF
-
-Request protection
-
-☁️ FastAPI Cloud
-
-Deployment
-
-📁 PROJECT STRUCTURE
-
-The following paths show where the main parts of AURA are located.
-
+```
 AURA/
-│
 ├── app/
-│   ├── api/
+│   ├── api/                 # REST API routes
 │   │   ├── auth.py
 │   │   ├── products.py
 │   │   ├── orders.py
 │   │   ├── suppliers.py
 │   │   └── ...
-│   │
-│   ├── services/
+│   ├── services/            # AI, RAG and business logic
 │   │   ├── agentic.py
 │   │   ├── rag.py
 │   │   └── ...
-│   │
-│   ├── models.py
-│   ├── database.py
-│   ├── config.py
-│   └── main.py
+│   ├── models.py            # Database models
+│   ├── database.py          # DB connection & session
+│   ├── config.py            # App configuration
+│   └── main.py              # FastAPI entry point
 │
 ├── frontend/
 │   ├── static/
 │   │   ├── css/
 │   │   └── js/
-│   │
-│   └── templates/
+│   └── templates/           # HTML pages
 │
 ├── data/
-│   ├── documents/
-│   ├── product_images/
-│   └── vector_store/
+│   ├── documents/           # Owner-uploaded documents
+│   ├── product_images/      # Product images
+│   └── vector_store/        # RAG vector storage
 │
 ├── requirements.txt
 ├── run.py
 ├── seed.py
 ├── .env.example
 └── README.md
+```
 
-📌 Important folders
+---
 
-app/api/
-Backend API routes for authentication, products, orders, suppliers and other modules.
+## ⚡ Quick Start
 
-app/services/
-AI, RAG and business service logic.
+### Prerequisites
+- Python 3.x (developed with Python 3.14)
+- A [Groq API key](https://console.groq.com/)
 
-frontend/templates/
-HTML pages/templates.
+### 1. Clone the repository
 
-frontend/static/
-Frontend CSS and JavaScript.
+```bash
+git clone https://github.com/wajeehatariq999-arch/AURA_Workspace.git
+cd AURA_Workspace
+```
 
-data/documents/
-Owner-uploaded business documents.
+### 2. Create a virtual environment
 
-data/product_images/
-Product images used by the marketplace.
-
-data/vector_store/
-Vector/RAG storage used for knowledge retrieval.
-
-🚀 RUN AURA LOCALLY
-
-1️⃣ Create the virtual environment
-
+```bash
+# Windows
 py -3.14 -m venv .venv
 .venv\Scripts\activate
 
-2️⃣ Install dependencies
+# macOS / Linux
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-3️⃣ Configure environment variables
+### 4. Configure environment variables
 
-Create a .env file using .env.example.
+Create a `.env` file from `.env.example`:
 
-Example:
-
+```env
 SECRET_KEY=your-secret-key
 GROQ_API_KEY=your-groq-api-key
+```
 
-⚠️ Never upload .env or API keys to a public GitHub repository.
+> ⚠️ **Never commit `.env` or API keys to a public repository.**
 
-4️⃣ Seed the application
+### 5. Seed the application
 
+```bash
 python seed.py
+```
 
-5️⃣ Start AURA
+### 6. Run AURA
 
+```bash
 python run.py
+```
 
-Open:
+| | URL |
+|---|-----|
+| 🌐 App | http://127.0.0.1:8000 |
+| 📘 API Docs (Swagger) | http://127.0.0.1:8000/docs |
 
-http://127.0.0.1:8000
+---
 
-FastAPI documentation:
+## 🎬 Demo Walkthrough
 
-http://127.0.0.1:8000/docs
+### 👔 Part 1 — Business Owner
 
-🌐 LIVE DEPLOYMENT
+1. **Sign in** as the Business Owner.
+2. **Dashboard:** review orders, revenue, products, low stock and recent orders.
+3. **Explore:** Products → Inventory → Orders → Suppliers → Analytics.
+4. **Knowledge Base:** upload a sample business document.
+5. **Ask AURA:**
+   - *"Which products need restocking?"*
+   - *"What is the current order situation?"*
+   - A question related to the uploaded document.
+6. **Review:** Approval Center → Agent Activity → Security & Audit.
 
-✨ AURA Marketplace
+### 🛍️ Part 2 — Customer
 
-🌐 Live Application:
-https://aura-workspace.fastapicloud.dev
+1. **Sign out** of the owner account.
+2. **Create** a customer account.
+3. **Browse** the marketplace and open a product.
+4. **Place** an order.
+5. **Ask AURA:**
+   - *"What is my latest order?"*
+   - *"What is the price of this product?"*
+   - A question about the store policy uploaded by the owner.
+6. **Ask an unrelated question** — AURA should politely explain it only handles AURA Marketplace topics.
 
-💻 GitHub Repository:
-https://github.com/wajeehatariq999-arch/AURA_Workspace
+---
 
-AURA is deployed as a real FastAPI web application.
+## 💎 Why AURA Marketplace?
 
-🎬 MENTOR DEMO
+| Traditional Store | Simple Chatbot | ✨ AURA Marketplace |
+|-------------------|----------------|--------------------|
+| Products → Cart → Order | Question → Answer | Shopping + Business Ops + Knowledge + AI + Security + Human Control |
 
-A mentor can understand the complete project using two simple parts.
+---
 
-👔 PART 1 — BUSINESS OWNER
+## 🌱 Roadmap
 
-Step 1
+- [ ] 💳 Online payment integration
+- [ ] 🚚 Delivery and shipping integration
+- [ ] 🔔 Customer notifications
+- [ ] ⭐ Product reviews
+- [ ] ❤️ Wishlist
+- [ ] 🎯 Personalized recommendations
+- [ ] 📈 Advanced business reports
+- [ ] 🤖 More specialized AI agents
+- [ ] 📱 Enhanced mobile experience
+- [ ] 🌍 Multi-business support
 
-Sign in as the Business Owner.
+---
 
-Step 2
+## 🏁 Summary
 
-Show the dashboard:
+**AURA Marketplace** is a full-stack platform where customers shop simply, business owners manage intelligently, and AURA AI answers from authorized business information.
 
-📦 Orders
+**Demonstrates:** Full-Stack Development • E-Commerce • AI • RAG • Vector Search • Database Design • Authentication • Authorization • Customer Privacy • Business Analytics • Human-in-the-Loop AI • Deployment
 
-💰 Revenue
+---
 
-🛍️ Products
+## 👩‍💻 Author
 
-⚠️ Low stock
+**wajeehatariq999-arch** — [GitHub Profile](https://github.com/wajeehatariq999-arch)
 
-🧾 Recent orders
+---
 
-Step 3
+<div align="center">
 
-Open:
+✨ **AURA Marketplace** ✨
 
-Products → Inventory → Orders → Suppliers → Analytics
+*Shop simply. Manage intelligently. Ask AURA.*
 
-Step 4
+⭐ If you like this project, consider giving it a star!
 
-Open:
-
-Knowledge Base
-
-Upload a sample business document.
-
-Step 5
-
-Open:
-
-Ask AURA
-
-Ask:
-
-Which products need restocking?
-
-Then:
-
-What is the current order situation?
-
-Then ask something related to the uploaded document.
-
-Step 6
-
-Show:
-
-Approval Center → Agent Activity → Security & Audit
-
-🛍️ PART 2 — CUSTOMER
-
-Step 1
-
-Sign out from the owner account.
-
-Step 2
-
-Create a customer account.
-
-Step 3
-
-Browse the marketplace.
-
-Step 4
-
-Open a product.
-
-Step 5
-
-Place an order.
-
-Step 6
-
-Ask AURA:
-
-What is my latest order?
-
-Then:
-
-What is the price of this product?
-
-Then ask a question about the store policy uploaded by the owner.
-
-Step 7
-
-Ask an unrelated question.
-
-AURA should politely explain that it only handles AURA Marketplace-related information.
-
-🎯 PROJECT HIGHLIGHTS
-
-🛍️ Complete Marketplace
-
-Customers can browse products and place orders.
-
-👔 Business Management
-
-Owners can manage products, inventory, orders and suppliers.
-
-🤖 Focused AI
-
-AURA answers marketplace and business-related questions.
-
-📚 Owner Knowledge
-
-Business documents can be uploaded and used as AI knowledge.
-
-🧠 RAG
-
-Relevant information is retrieved from owner-uploaded documents.
-
-🔐 Role-Based Security
-
-Different users receive different permissions.
-
-🛡️ Customer Privacy
-
-Customers can access their own order information.
-
-✅ Human Approval
-
-Important AI actions can require owner/admin approval.
-
-📊 Business Insights
-
-Owners can understand business activity through analytics.
-
-🌐 Real Deployment
-
-The project runs as a deployed FastAPI application.
-
-💎 WHY AURA MARKETPLACE?
-
-A normal online store mainly provides:
-
-Products → Cart → Order
-
-A simple chatbot mainly provides:
-
-Question → Answer
-
-AURA Marketplace brings both together:
-
-🛍️ SHOPPING
-     │
-     ▼
-👔 BUSINESS OPERATIONS
-     │
-     ▼
-📚 BUSINESS KNOWLEDGE
-     │
-     ▼
-🤖 AI ASSISTANCE
-     │
-     ▼
-🔐 SECURE ACCESS
-     │
-     ▼
-✅ HUMAN CONTROL
-
-The result is one connected platform for both the business owner and the customer.
-
-🌱 FUTURE POSSIBILITIES
-
-AURA Marketplace can be expanded with:
-
-💳 Online payment integration
-
-🚚 Delivery and shipping integration
-
-🔔 Customer notifications
-
-⭐ Product reviews
-
-❤️ Wishlist
-
-🎯 Personalized recommendations
-
-📈 Advanced business reports
-
-🤖 More specialized AI agents
-
-📱 Enhanced mobile experience
-
-🌍 Multi-business support
-
-🏁 FINAL SUMMARY
-
-✨ AURA Marketplace
-
-A full-stack marketplace where customers shop simply, business owners manage intelligently, and AURA AI answers from authorized business information.
-
-AURA demonstrates:
-
-Full-Stack Development • E-Commerce • AI • RAG • Vector Search • Database Design • Authentication • Authorization • Customer Privacy • Business Analytics • Human-in-the-Loop AI • Deployment
-
-<p align="center">
-
-✨ AURA Marketplace ✨
-
-Shop simply. Manage intelligently. Ask AURA.
-
-</p>
+</div>
