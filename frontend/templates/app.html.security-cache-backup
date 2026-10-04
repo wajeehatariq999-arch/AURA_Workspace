@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>AURA Workspace</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/customer.css">
+</head>
+<body class="workspace">
+    <div id="toast-root"></div>
+
+    <div id="auth-screen" class="auth-screen hidden">
+        <div class="auth-shell">
+            <a class="brand" href="/">
+                <span class="brand-mark">A</span>
+                <span>AURA</span>
+            </a>
+
+            <div class="auth-card">
+                <div class="auth-tabs">
+                    <button id="signin-tab" class="active">Sign in</button>
+                    <button id="signup-tab">Customer sign up</button>
+                </div>
+                <div id="auth-panel"></div>
+            </div>
+
+            <p class="auth-foot">
+                Secure business operations · Your data stays scoped to your business
+            </p>
+        </div>
+    </div>
+
+    <div id="app-shell" class="app-shell hidden">
+        <aside class="sidebar">
+            <div class="side-top">
+                <a class="brand" href="/">
+                    <span class="brand-mark">A</span>
+                    <span>AURA</span>
+                </a>
+                <button id="sidebar-close" class="icon-btn mobile-only">×</button>
+            </div>
+
+            <div id="business-mini" class="business-mini"></div>
+            <nav id="main-nav"></nav>
+
+            <div class="side-bottom">
+                <div class="secure-note">
+                    <span>◉</span>
+                    <div>
+                        <b>Protected workspace</b>
+                        <small>Role-based access active</small>
+                    </div>
+                </div>
+                <button id="signout" class="side-signout">
+                    Sign out <span>↗</span>
+                </button>
+            </div>
+        </aside>
+
+        <div id="scrim" class="scrim"></div>
+
+        <main class="main">
+            <header class="topbar">
+                <button id="menu-btn" class="icon-btn mobile-only">☰</button>
+                <div id="breadcrumb" class="breadcrumb"></div>
+                <div class="top-actions">
+                    <button class="quick-ai" onclick="route('ai')">
+                        <span>✦</span> Ask AURA
+                    </button>
+                    <div id="user-menu" class="user-menu"></div>
+                </div>
+            </header>
+
+            <div id="page" class="page"></div>
+        </main>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-dialog">
+            <button id="modal-close" class="modal-close">×</button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=20261004-1"></script>
+    <script src="/static/js/customer.js?v=20261004-1"></script>
+</body>
+</html>
