@@ -16,6 +16,7 @@ from app.models import (
     OrderItem,
 )
 from app.auth.security import hash_password
+from app.config import settings
 
 
 Base.metadata.create_all(bind=engine)
@@ -77,7 +78,7 @@ db = SessionLocal()
 try:
     existing = (
         db.query(Business)
-        .filter(Business.name == "AURA Demo Commerce")
+        .filter(Business.name == settings.owner_business_name)
         .first()
     )
 
@@ -89,7 +90,7 @@ try:
 
     else:
         b = Business(
-            name="AURA Demo Commerce",
+            name=settings.owner_business_name,
             description="A demonstration retail business managed through AURA.",
             contact_email="hello@aurademo.com",
             contact_phone="+92 300 0000000",
@@ -109,8 +110,8 @@ try:
         owner = User(
             business_id=b.id,
             full_name="Demo Owner",
-            email="owner@aurademo.com",
-            password_hash=hash_password("ChangeMe-123!"),
+            email=settings.owner_email,
+            password_hash=hash_password(settings.owner_password),
             role="owner",
         )
 
