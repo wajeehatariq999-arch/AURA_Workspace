@@ -79,7 +79,16 @@ async def upload_knowledge(file:UploadFile=File(...),user:User=Depends(get_curre
     except Exception as exc:
         db.rollback()
         if path.exists():path.unlink(missing_ok=True)
-        raise HTTPException(422,"Document could not be extracted or indexed safely") from exc
+        # Keep the response useful for the owner while avoiding a traceback.
+        # The detailed exception is intentionally limited to the exception
+        # type/message so deployment problems are diagnosable from the UI.
+        detail = str(exc).strip().replace("\n", " ")
+        if len(detail) > 260:
+            detail = detail[:260] + "..."
+        raise HTTPException(
+            422,
+            f"Document could not be indexed: {type(exc).__name__}: {detail or 'unknown error'}",
+        ) from exc
 
 @router.post("/knowledge/{document_id}/reindex",dependencies=[admin,Depends(require_csrf)])
 def reindex(document_id:int,user:User=Depends(get_current_user),db:Session=Depends(get_db)):
