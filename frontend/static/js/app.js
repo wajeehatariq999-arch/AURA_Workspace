@@ -148,117 +148,63 @@ function toast(msg, type = '') {
 // ============================================================
 
 function setAuthMode(signup = false) {
-    $('#signin-tab').classList.toggle(
-        'active',
-        !signup
-    );
-
-    $('#signup-tab').classList.toggle(
-        'active',
-        signup
-    );
+    $('#signin-tab').classList.toggle('active', !signup);
+    $('#signup-tab').classList.toggle('active', signup);
 
     $('#auth-panel').innerHTML = signup
         ? `
         <form id="signup-form" class="auth-form">
-
-            <div class="eyebrow">
-                START YOUR WORKSPACE
-            </div>
-
-            <h1>Create AURA</h1>
-
-            <p>
-                Create a business workspace.
-                You can manage everything from
-                the application after signing in.
-            </p>
+            <div class="eyebrow">JOIN AURA</div>
+            <h1>Create your customer account</h1>
+            <p>Create your account, choose a store, browse products and place orders.</p>
 
             <div class="form-grid">
-
                 <div class="field full">
                     <label>Full name</label>
-                    <input
-                        id="su-name"
-                        required
-                        minlength="2"
-                    >
-                </div>
-
-                <div class="field full">
-                    <label>Business name</label>
-                    <input
-                        id="su-business"
-                        required
-                        minlength="2"
-                    >
+                    <input id="su-name" required minlength="2" autocomplete="name">
                 </div>
 
                 <div class="field full">
                     <label>Email</label>
-                    <input
-                        id="su-email"
-                        type="email"
-                        required
-                    >
+                    <input id="su-email" type="email" required autocomplete="email">
                 </div>
 
                 <div class="field full">
                     <label>Password</label>
-                    <input
-                        id="su-password"
-                        type="password"
-                        minlength="8"
-                        required
-                    >
+                    <input id="su-password" type="password" minlength="8" required autocomplete="new-password">
                 </div>
 
+                <div class="field full">
+                    <label>Choose store</label>
+                    <select id="su-business-id" required>
+                        <option value="">Loading stores…</option>
+                    </select>
+                </div>
             </div>
 
             <p id="auth-error" class="error"></p>
 
             <button class="btn btn-primary btn-full">
-                Create workspace
+                Create customer account
             </button>
-
         </form>
         `
         : `
         <form id="signin-form" class="auth-form">
-
-            <div class="eyebrow">
-                WELCOME BACK
-            </div>
-
+            <div class="eyebrow">WELCOME BACK</div>
             <h1>Sign in to AURA</h1>
-
-            <p>
-                Access your role-based business
-                workspace and AI Command Center.
-            </p>
+            <p>Business owner access is sign-in only. Customers can create an account from Customer sign up.</p>
 
             <div class="grid">
-
                 <div class="field">
                     <label>Email</label>
-                    <input
-                        id="si-email"
-                        type="email"
-                        required
-                        autocomplete="email"
-                    >
+                    <input id="si-email" type="email" required autocomplete="email">
                 </div>
 
                 <div class="field">
                     <label>Password</label>
-                    <input
-                        id="si-password"
-                        type="password"
-                        required
-                        autocomplete="current-password"
-                    >
+                    <input id="si-password" type="password" required autocomplete="current-password">
                 </div>
-
             </div>
 
             <p id="auth-error" class="error"></p>
@@ -266,12 +212,30 @@ function setAuthMode(signup = false) {
             <button class="btn btn-primary btn-full">
                 Sign in
             </button>
-
         </form>
         `;
 
     if (signup) {
-        $('#signup-form').onsubmit = async e => {
+        const form = $('#signup-form');
+
+        api('/api/auth/businesses')
+            .then(businesses => {
+                const select = $('#su-business-id');
+                if (!select) return;
+                select.innerHTML =
+                    '<option value="">Choose a store</option>' +
+                    businesses.map(b =>
+                        `<option value="${b.id}">${esc(b.name)} · ${esc(b.currency)}</option>`
+                    ).join('');
+            })
+            .catch(() => {
+                const select = $('#su-business-id');
+                if (select) {
+                    select.innerHTML = '<option value="">Could not load stores</option>';
+                }
+            });
+
+        form.onsubmit = async e => {
             e.preventDefault();
             await authSubmit(true);
         };
@@ -292,30 +256,35 @@ async function authSubmit(signup) {
     $('#auth-error').textContent = '';
 
     try {
-        me = signup
-            ? await api('/api/auth/signup', {
-                  method: 'POST',
-                  body: {
-                      full_name: $('#su-name').value,
-                      email: $('#su-email').value,
-                      password: $('#su-password').value,
-                      business_name:
-                          $('#su-business').value
-                  }
-              })
-            : await api('/api/auth/signin', {
-                  method: 'POST',
-                  body: {
-                      email: $('#si-email').value,
-                      password: $('#si-password').value
-                  }
-              });
+        if (signup) {
+            const businessId = Number($('#su-business-id').value);
+
+            if (!businessId) {
+                throw new Error('Please choose a store.');
+            }
+
+            me = await api('/api/auth/customer-signup', {
+                method: 'POST',
+                body: {
+                    full_name: $('#su-name').value,
+                    email: $('#su-email').value,
+                    password: $('#su-password').value,
+                    business_id: businessId
+                }
+            });
+        } else {
+            me = await api('/api/auth/signin', {
+                method: 'POST',
+                body: {
+                    email: $('#si-email').value,
+                    password: $('#si-password').value
+                }
+            });
+        }
 
         await enter();
-
     } catch (e) {
-        $('#auth-error').textContent =
-            e.message;
+        $('#auth-error').textContent = e.message;
     }
 }
 
