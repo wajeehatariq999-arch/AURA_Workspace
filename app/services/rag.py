@@ -248,12 +248,8 @@ def index_document(
     document: KnowledgeDocument,
     path: Path,
 ):
-    client = _load_dependencies()
-    collection = client.get_or_create_collection(
-        _collection_name(document.business_id),
-        metadata={"hnsw:space": "cosine"},
-    )
-
+    # Extraction and database chunk storage are the source of truth. Vector
+    # indexing is an enhancement and must never make a valid upload fail.
     blocks = extract_document(path, document.mime_type)
     chunks = chunk_blocks(blocks)
 
@@ -296,19 +292,79 @@ def index_document(
             )
         )
 
-    vectors = _embed_texts(texts)
-
-    collection.add(
-        ids=ids,
-        documents=texts,
-        embeddings=vectors,
-        metadatas=metas,
-    )
-
     document.chunk_count = len(chunks)
     document.status = "indexed"
     document.error_message = None
+
+    # Commit the valid document/chunks before optional vector indexing. This
+    # prevents Chroma or embedding infrastructure from turning a successful
+    # document upload into a generic "Upload failed" response.
     db.commit()
+
+    try:
+        client = _load_dependencies()
+        collection = client.get_or_create_collection(
+            _collection_name(document.business_id),
+            metadata={"hnsw:space": "cosine"},
+        )
+        vectors = _embed_texts(texts)
+        collection.add(
+            ids=ids,
+            documents=texts,
+            embeddings=vectors,
+            metadatas=metas,
+        )
+    except Exception as exc:
+        # Keep the searchable database chunks. Retrieval has a lexical
+        # fallback, so RAG remains useful even when Chroma is unavailable.
+        document.error_message = (
+            f"Vector index unavailable: {type(exc).__name__}: {exc}"
+        )[:2000]
+        db.commit()
+
+
+def _lexical_retrieve(
+    db: Session,
+    business_id: int,
+    query: str,
+    top_k: int,
+) -> list[dict]:
+    """Small dependency-free fallback for cloud environments."""
+    terms = [
+        x for x in re.findall(r"[a-z0-9]+", query.lower())
+        if len(x) >= 2
+    ]
+
+    rows = (
+        db.query(KnowledgeChunk, KnowledgeDocument)
+        .join(
+            KnowledgeDocument,
+            KnowledgeDocument.id == KnowledgeChunk.document_id,
+        )
+        .filter(KnowledgeDocument.business_id == business_id)
+        .all()
+    )
+
+    scored = []
+    for chunk, doc in rows:
+        haystack = chunk.content.lower()
+        score = sum(haystack.count(term) for term in terms)
+        if score:
+            scored.append((score, chunk, doc))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    return [
+        {
+            "document_id": doc.id,
+            "document_name": doc.original_name,
+            "page": chunk.page_number,
+            "section": chunk.section,
+            "content": chunk.content,
+            "distance": 1.0 / (1.0 + score),
+        }
+        for score, chunk, doc in scored[:top_k]
+    ]
 
 
 def retrieve(
@@ -317,47 +373,55 @@ def retrieve(
     query: str,
     top_k: int = 5,
 ) -> list[dict]:
-    client = _load_dependencies()
-    collection = client.get_or_create_collection(
-        _collection_name(business_id)
-    )
-
-    count = collection.count()
-    if count == 0:
-        return []
-
-    vector = _embed_texts([query])
-
-    result = collection.query(
-        query_embeddings=vector,
-        n_results=min(top_k, count),
-        where={"business_id": business_id},
-        include=["documents", "metadatas", "distances"],
-    )
-
-    out = []
-
-    for text, meta, distance in zip(
-        result.get("documents", [[]])[0],
-        result.get("metadatas", [[]])[0],
-        result.get("distances", [[]])[0],
-    ):
-        doc = db.get(
-            KnowledgeDocument,
-            int(meta["document_id"]),
+    try:
+        client = _load_dependencies()
+        collection = client.get_or_create_collection(
+            _collection_name(business_id)
         )
 
-        out.append(
-            {
-                "document_id": doc.id if doc else None,
-                "document_name": (
-                    doc.original_name if doc else "Unknown"
-                ),
-                "page": meta.get("page") or None,
-                "section": meta.get("section") or None,
-                "content": text,
-                "distance": distance,
-            }
-        )
+        count = collection.count()
+        if count:
+            vector = _embed_texts([query])
+            result = collection.query(
+                query_embeddings=vector,
+                n_results=min(top_k, count),
+                where={"business_id": business_id},
+                include=["documents", "metadatas", "distances"],
+            )
 
-    return out
+            out = []
+            for text, meta, distance in zip(
+                result.get("documents", [[]])[0],
+                result.get("metadatas", [[]])[0],
+                result.get("distances", [[]])[0],
+            ):
+                doc = db.get(
+                    KnowledgeDocument,
+                    int(meta["document_id"]),
+                )
+
+                out.append(
+                    {
+                        "document_id": doc.id if doc else None,
+                        "document_name": (
+                            doc.original_name if doc else "Unknown"
+                        ),
+                        "page": meta.get("page") or None,
+                        "section": meta.get("section") or None,
+                        "content": text,
+                        "distance": distance,
+                    }
+                )
+
+            if out:
+                return out
+    except Exception:
+        pass
+
+    return _lexical_retrieve(
+        db,
+        business_id,
+        query,
+        top_k,
+    )
+
