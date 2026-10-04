@@ -17,7 +17,9 @@
 ![Groq](https://img.shields.io/badge/Groq-LLM-F55036)
 
 [Live Demo](https://aura-workspace.fastapicloud.dev) • [Features](#-features) • [Architecture](#-system-architecture) • [Quick Start](#-quick-start) • [Demo Guide](#-demo-walkthrough)
+<br>
 
+<img src="docs/screenshots/home.jpg" alt="AURA Marketplace Home Page" width="900">
 </div>
 
 ---
