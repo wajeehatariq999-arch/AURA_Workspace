@@ -11,8 +11,9 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://127.0.0.1:8000,http://localhost:8000"
     cookie_secure: bool = False
     cookie_samesite: str = "lax"
-    demo_admin_email: str = "owner@aurademo.local"
-    demo_admin_password: str = "ChangeMe-123!"
+    owner_email: str = "owner@aurademo.com"
+    owner_password: str = "ChangeMe-123!"
+    owner_business_name: str = "AURA Demo Commerce"
     groq_api_key: str | None = None
     groq_model: str = "openai/gpt-oss-120b"
 
