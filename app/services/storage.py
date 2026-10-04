@@ -40,7 +40,9 @@ def delete_product_image(storage_name: str):
     if path.exists(): path.unlink()
 
 async def save_product_image(upload: UploadFile):
-    return await _save_image(upload, PRODUCT_DIR)
+    storage_name, original, size = await _save_image(upload, PRODUCT_DIR)
+    data = (PRODUCT_DIR / storage_name).read_bytes()
+    return storage_name, original, size, data
 
 async def save_logo_image(upload: UploadFile):
     return await _save_image(upload, LOGO_DIR)
