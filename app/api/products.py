@@ -54,11 +54,11 @@ def create_category(payload:CategoryIn,user:User=Depends(get_current_user),db:Se
 
 @router.post("/products/{pid}/images",dependencies=[admin,Depends(require_csrf)])
 async def upload_image(pid:int,file:UploadFile=File(...),primary:bool=False,user:User=Depends(get_current_user),db:Session=Depends(get_db)):
-    p=get_product(db,user,pid); storage,original,size=await save_product_image(file)
+    p=get_product(db,user,pid); storage,original,size,data=await save_product_image(file)
     if primary:
         for old in p.images: old.is_primary=False
     elif not p.images: primary=True
-    img=ProductImage(product_id=p.id,storage_name=storage,original_name=original,mime_type=file.content_type,file_size=size,is_primary=primary); db.add(img); log_action(db,user,"upload_product_image","product_image",details={"product_id":pid}); db.commit(); db.refresh(img); return {"id":img.id,"url":f"/api/product-images/{storage}","is_primary":img.is_primary}
+    img=ProductImage(product_id=p.id,storage_name=storage,original_name=original,mime_type=file.content_type,file_size=size,data=data,is_primary=primary); db.add(img); log_action(db,user,"upload_product_image","product_image",details={"product_id":pid}); db.commit(); db.refresh(img); return {"id":img.id,"url":f"/api/product-images/{storage}","is_primary":img.is_primary}
 
 @router.delete("/product-images/{image_id}",dependencies=[admin,Depends(require_csrf)])
 def delete_image(image_id:int,user:User=Depends(get_current_user),db:Session=Depends(get_db)):
