@@ -303,10 +303,18 @@ async function enter() {
 
     renderShell();
 
-    route(
-        new URLSearchParams(location.search)
-            .get('page') || 'dashboard'
-    );
+    const initialPage =
+        new URLSearchParams(location.search).get('page') || 'dashboard';
+
+    // Customer storefront has its own navigation/rendering layer.
+    // Start it directly so the customer UI is never left blank if
+    // the route wrapper is replaced by customer.js.
+    if (me?.role === 'customer' && typeof window.customerStorePage === 'function') {
+        window.customerStorePage();
+        history.replaceState(null, '', '/app?page=store');
+    } else {
+        route(initialPage);
+    }
 }
 
 
