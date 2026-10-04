@@ -1450,6 +1450,155 @@ async function submitCustomerOrder() {
 }
 
 /* =========================================================
+   CUSTOMER AURA AI HELP
+========================================================= */
+
+async function customerAuraHelpPage() {
+    document.querySelector("#page").innerHTML = `
+        <div class="page-head">
+            <div>
+                <div class="eyebrow">AURA AI ASSISTANT</div>
+                <h1>Ask AURA</h1>
+                <p>Ask questions about products, store information, orders, or anything the business knowledge base can answer.</p>
+            </div>
+        </div>
+
+        <div class="card" style="max-width:900px;margin-top:18px">
+            <div class="field">
+                <label>Your question</label>
+                <textarea id="customer-aura-question" rows="6" placeholder="For example: Which products are currently available?"></textarea>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                <button class="btn btn-primary" id="customer-aura-ask">Ask AURA</button>
+            </div>
+
+            <div id="customer-aura-answer" style="margin-top:18px"></div>
+        </div>
+    `;
+
+    document.querySelector("#customer-aura-ask").onclick = async () => {
+        const input = document.querySelector("#customer-aura-question");
+        const output = document.querySelector("#customer-aura-answer");
+        const message = input.value.trim();
+
+        if (!message) {
+            toast("Please enter your question.", "error");
+            return;
+        }
+
+        output.innerHTML = '<div class="top-note">AURA is thinking…</div>';
+
+        try {
+            const result = await api("/api/feedback/query", {
+                method: "POST",
+                body: {
+                    kind: "query",
+                    subject: "Customer question",
+                    message: message
+                }
+            });
+
+            output.innerHTML = `
+                <div class="card" style="background:var(--surface-soft,#f7f3eb)">
+                    <div class="eyebrow">AURA RESPONSE</div>
+                    <div style="white-space:pre-wrap;line-height:1.7;margin-top:8px">${esc(result.answer || "AURA could not provide an answer.")}</div>
+                </div>
+            `;
+        } catch (e) {
+            output.innerHTML = `<p class="error">${esc(e.message)}</p>`;
+        }
+    };
+}
+
+/* =========================================================
+   CUSTOMER FEEDBACK
+========================================================= */
+
+async function customerFeedbackPage() {
+    document.querySelector("#page").innerHTML = `
+        <div class="page-head">
+            <div>
+                <div class="eyebrow">YOUR VOICE MATTERS</div>
+                <h1>Customer Feedback</h1>
+                <p>Share your experience, suggestion, or concern with the business.</p>
+            </div>
+        </div>
+
+        <div class="card" style="max-width:900px;margin-top:18px">
+            <div class="grid grid-2">
+                <div class="field">
+                    <label>Feedback type</label>
+                    <select id="customer-feedback-kind">
+                        <option value="feedback">General feedback</option>
+                        <option value="query">Question</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Rating</label>
+                    <select id="customer-feedback-rating">
+                        <option value="">No rating</option>
+                        <option value="5">5 — Excellent</option>
+                        <option value="4">4 — Good</option>
+                        <option value="3">3 — Average</option>
+                        <option value="2">2 — Needs improvement</option>
+                        <option value="1">1 — Poor</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field" style="margin-top:14px">
+                <label>Subject</label>
+                <input id="customer-feedback-subject" maxlength="200" placeholder="Short subject">
+            </div>
+
+            <div class="field" style="margin-top:14px">
+                <label>Message</label>
+                <textarea id="customer-feedback-message" rows="7" maxlength="4000" placeholder="Write your feedback here…"></textarea>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                <button class="btn btn-primary" id="customer-feedback-submit">Send feedback</button>
+            </div>
+
+            <div id="customer-feedback-status" style="margin-top:12px"></div>
+        </div>
+    `;
+
+    document.querySelector("#customer-feedback-submit").onclick = async () => {
+        const status = document.querySelector("#customer-feedback-status");
+        const message = document.querySelector("#customer-feedback-message").value.trim();
+
+        if (message.length < 2) {
+            toast("Please write your feedback.", "error");
+            return;
+        }
+
+        try {
+            const kind = document.querySelector("#customer-feedback-kind").value;
+            const ratingValue = document.querySelector("#customer-feedback-rating").value;
+
+            await api("/api/feedback", {
+                method: "POST",
+                body: {
+                    kind: kind,
+                    rating: ratingValue ? Number(ratingValue) : null,
+                    subject: document.querySelector("#customer-feedback-subject").value.trim() || null,
+                    message: message
+                }
+            });
+
+            status.innerHTML = '<div class="top-note">Thank you. Your feedback has been submitted successfully.</div>';
+            document.querySelector("#customer-feedback-message").value = "";
+            document.querySelector("#customer-feedback-subject").value = "";
+        } catch (e) {
+            status.innerHTML = `<p class="error">${esc(e.message)}</p>`;
+        }
+    };
+}
+
+/* =========================================================
    CUSTOMER SHELL
 ========================================================= */
 
