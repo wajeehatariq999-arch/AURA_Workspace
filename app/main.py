@@ -17,6 +17,18 @@ BASE=Path(__file__).resolve().parent.parent
 for path in [BASE/"data"/"uploads",BASE/"data"/"product_images",BASE/"data"/"documents",BASE/"data"/"vector_store"]: path.mkdir(parents=True,exist_ok=True)
 Base.metadata.create_all(bind=engine)
 
+def ensure_schema_columns():
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    if "product_images" in inspector.get_table_names():
+        columns = {col["name"] for col in inspector.get_columns("product_images")}
+        if "data" not in columns:
+            statement = "ALTER TABLE product_images ADD COLUMN data BLOB" if settings.database_url.startswith("sqlite") else "ALTER TABLE product_images ADD COLUMN data BYTEA"
+            with engine.begin() as conn:
+                conn.execute(text(statement))
+
+ensure_schema_columns()
+
 def ensure_fixed_owner():
     """Ensure the single configured business owner exists for a fresh deployment."""
     from app.database import SessionLocal
@@ -95,6 +107,9 @@ def protected_product_image(storage_name: str, user=Depends(get_current_user), d
     from pathlib import Path
     img = db.query(ProductImage).join(Product).filter(ProductImage.storage_name == Path(storage_name).name, Product.business_id == user.business_id).first()
     if not img: raise HTTPException(404, "Image not found")
+    if img.data:
+        from fastapi.responses import Response
+        return Response(content=img.data, media_type=img.mime_type)
     path = BASE / "data" / "product_images" / img.storage_name
     if not path.exists(): raise HTTPException(404, "Image not found")
     return FileResponse(path, media_type=img.mime_type)
