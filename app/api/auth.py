@@ -78,14 +78,21 @@ def public_businesses(
 
 @router.post(
     "/signup",
-    response_model=UserOut,
 )
-def signup(
-    payload: SignupIn,
-    response: Response,
-    request: Request,
-    db: Session = Depends(get_db),
-):
+def signup_disabled():
+    raise HTTPException(
+        403,
+        "Business owner accounts are created by AURA. Please use the Customer sign up option.",
+    )
+
+
+def _owner_login_is_allowed(user: User) -> bool:
+    return (
+        user.role in {"owner", "admin"}
+        and user.email.lower() == settings.owner_email.lower()
+    )
+
+
     email = payload.email.lower()
 
     if db.query(User).filter(
@@ -283,6 +290,12 @@ def signin(
         raise HTTPException(
             403,
             "This account is inactive",
+        )
+
+    if user.role in {"owner", "admin"} and not _owner_login_is_allowed(user):
+        raise HTTPException(
+            403,
+            "This owner account is not authorized for AURA.",
         )
 
     log_action(
