@@ -298,42 +298,22 @@ window.setAuthMode = function (signup = false) {
         <form
             id="signup-form"
             class="auth-form"
-            data-account-type="owner"
+            data-account-type="customer"
         >
+
             <div class="eyebrow">
                 JOIN AURA
             </div>
 
-            <h1>Create your account</h1>
+            <h1>Create your customer account</h1>
 
             <p>
-                Choose whether you are creating a business
-                workspace or joining a store as a customer.
+                Create your account, choose a store,
+                browse products and place orders.
             </p>
 
-            <div class="customer-account-switch">
-                <button
-                    type="button"
-                    id="account-owner"
-                    class="customer-choice active"
-                    onclick="setAccountType('owner')"
-                >
-                    <strong>Business Owner</strong>
-                    <small>Create and manage a business</small>
-                </button>
-
-                <button
-                    type="button"
-                    id="account-customer"
-                    class="customer-choice"
-                    onclick="setAccountType('customer')"
-                >
-                    <strong>Customer</strong>
-                    <small>Browse products and place orders</small>
-                </button>
-            </div>
-
             <div class="form-grid">
+
                 <div class="field full">
                     <label>Full name</label>
                     <input
@@ -364,46 +344,22 @@ window.setAuthMode = function (signup = false) {
                         autocomplete="new-password"
                     >
                 </div>
-            </div>
 
-            <div id="owner-fields">
-                <div
-                    class="field full"
-                    style="margin-top:12px"
-                >
-                    <label>Business name</label>
-                    <input
-                        id="su-business"
-                        minlength="2"
-                        autocomplete="organization"
-                    >
-                </div>
-            </div>
+                <div class="field full">
+                    <label>Choose store</label>
 
-            <div
-                id="customer-fields"
-                class="hidden"
-            >
-                <div
-                    class="field full"
-                    style="margin-top:12px"
-                >
-                    <label>Store</label>
-
-                    <select id="su-business-id">
+                    <select id="su-business-id" required>
                         <option value="">
                             Loading stores…
                         </option>
                     </select>
                 </div>
 
-                <div
-                    class="top-note"
-                    style="margin-top:10px"
-                >
-                    Your customer account will be connected
-                    to the selected store.
-                </div>
+            </div>
+
+            <div class="top-note" style="margin-top:10px">
+                Your customer account will be connected
+                to the selected store.
             </div>
 
             <p
@@ -411,17 +367,23 @@ window.setAuthMode = function (signup = false) {
                 class="error"
             ></p>
 
-            <button class="btn btn-primary btn-full">
-                Create account
+            <button
+                class="btn btn-primary btn-full"
+            >
+                Create customer account
             </button>
+
         </form>
     `;
 
-    document.querySelector("#signup-form").onsubmit =
-        async e => {
+    document
+        .querySelector("#signup-form")
+        .onsubmit = async e => {
             e.preventDefault();
             await authSubmit(true);
         };
+
+    loadCustomerBusinesses();
 };
 
 /* =========================================================
