@@ -72,7 +72,22 @@ flowchart TD
     C3 --> D
     D --> E[Short & Relevant Answers]
 ```
+---
 
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <b>👔 Business Owner Dashboard</b><br><br>
+      <img src="docs/screenshots/dashboard.jpg" alt="Owner Dashboard" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <b>🛍️ Customer Dashboard</b><br><br>
+      <img src="docs/screenshots/customer marketplace.jpg" alt="Customer Dashboard" width="100%">
+    </td>
+  </tr>
+</table>
 ---
 
 ## 🎯 Key Highlights
