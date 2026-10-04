@@ -495,7 +495,7 @@ function route(p) {
         activity: activityPage,
         knowledge: knowledgePage,
         approvals: approvalsPage,
-        security: securityPage,
+        security: securityAuditPage,
         feedback: feedbackPage,
         settings: settingsPage,
         profile: profilePage
@@ -4378,7 +4378,7 @@ async function resolveApproval(
 // SECURITY
 // ============================================================
 
-async function securityPage() {
+async function securityAuditPage() {
     if (
         !['owner', 'admin'].includes(
             me.role
